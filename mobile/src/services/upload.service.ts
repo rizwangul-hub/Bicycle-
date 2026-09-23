@@ -102,9 +102,10 @@ export const uploadService = {
     const formData = new FormData();
     formData.append('category', category);
 
-    files.forEach((file, index) => {
+    for (let index = 0; index < files.length; index++) {
+      const file = files[index];
       const uri = file.uri;
-      let filename = file.name || uri.split('/').pop() || `upload_${Date.now()}_${index}.jpg`;
+      const filename = file.name || uri.split('/').pop() || `upload_${Date.now()}_${index}.jpg`;
       
       // Fallback mime type detection
       let mime = file.mimeType || 'image/jpeg';
@@ -116,14 +117,28 @@ export const uploadService = {
         else mime = 'image/jpeg';
       }
 
-      // Append in React Native format
-      // @ts-expect-error React Native FormData accepts an object with { uri, name, type }
-      formData.append('files', {
-        uri,
-        name: filename,
-        type: mime,
-      });
-    });
+      // Convert local URI to standard WHATWG File / Blob object
+      // This prevents the React Native / Expo "Unsupported FormDataPart implementation" error
+      try {
+        const fileResponse = await fetch(uri);
+        const blob = await fileResponse.blob();
+
+        if (typeof File !== 'undefined') {
+          const fileObj = new File([blob], filename, { type: mime });
+          formData.append('files', fileObj);
+        } else {
+          formData.append('files', blob, filename);
+        }
+      } catch (blobErr) {
+        console.warn('File/Blob conversion failed, using legacy object format fallback:', blobErr);
+        // @ts-expect-error React Native legacy FormData accepts an object with { uri, name, type }
+        formData.append('files', {
+          uri,
+          name: filename,
+          type: mime,
+        });
+      }
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
