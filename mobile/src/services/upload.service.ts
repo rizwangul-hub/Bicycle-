@@ -8,6 +8,7 @@
  *  - DELETE /api/uploads/:attachmentId
  */
 
+import axios from 'axios';
 import { BASE_URL, ENDPOINTS } from '@/constants/api';
 import type {
   Attachment,
@@ -117,64 +118,43 @@ export const uploadService = {
         else mime = 'image/jpeg';
       }
 
-      // Convert local URI to standard WHATWG File / Blob object
-      // This prevents the React Native / Expo "Unsupported FormDataPart implementation" error
-      try {
-        const fileResponse = await fetch(uri);
-        const blob = await fileResponse.blob();
-
-        if (typeof File !== 'undefined') {
-          const fileObj = new File([blob], filename, { type: mime });
-          formData.append('files', fileObj);
-        } else {
-          formData.append('files', blob, filename);
-        }
-      } catch (blobErr) {
-        console.warn('File/Blob conversion failed, using legacy object format fallback:', blobErr);
-        // @ts-expect-error React Native legacy FormData accepts an object with { uri, name, type }
-        formData.append('files', {
-          uri,
-          name: filename,
-          type: mime,
-        });
-      }
+      // Native React Native FormData format — natively processed by Axios / XHR NetworkingModule
+      // @ts-expect-error React Native native FormData format
+      formData.append('files', {
+        uri,
+        name: filename,
+        type: mime,
+      });
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
     try {
-      const response = await fetch(
+      // Axios utilizes React Native's native XMLHttpRequest network stack (RCTNetworking / NetworkingModule)
+      // avoiding Expo fetch WinterCG FormDataPart serialization issues and File getter limitations
+      const response = await axios.post(
         `${BASE_URL}${ENDPOINTS.UPLOADS.DECLARATION(declarationId)}`,
+        formData,
         {
-          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
-            // Do NOT set Content-Type header; fetch handles boundary automatically
+            'Content-Type': 'multipart/form-data',
           },
-          body: formData,
-          signal: controller.signal,
+          timeout: REQUEST_TIMEOUT_MS,
         }
       );
 
-      const json = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(json.message || `Upload failed with status ${response.status}`);
-      }
-
-      return json.data;
-    } catch (err: unknown) {
-      const error = err as Error;
-      if (error.name === 'AbortError') {
+      return response.data?.data;
+    } catch (err: any) {
+      if (err.code === 'ECONNABORTED') {
         throw new Error('Upload timed out. Please check your connection and retry.');
       }
-      if (error.message?.includes('Network request failed')) {
+      const serverMessage = err.response?.data?.message;
+      if (serverMessage) {
+        throw new Error(serverMessage);
+      }
+      if (err.message?.includes('Network Error')) {
         throw new Error('Unable to upload. Please check your internet connection.');
       }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
+      throw new Error(err.message || 'Upload failed');
     }
   },
 
