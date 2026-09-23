@@ -1,6 +1,5 @@
 const path = require('path');
 const fs = require('fs');
-const archiver = require('archiver');
 const asyncHandler = require('../utils/asyncHandler');
 const attachmentService = require('../services/attachment.service');
 const Declaration = require('../models/Declaration.model');
@@ -133,6 +132,9 @@ const downloadAllAttachments = asyncHandler(async (req, res, next) => {
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
 
+  // Dynamically import ESM archiver to ensure full compatibility with CommonJS on Vercel
+  const archiverModule = await import('archiver');
+  const archiver = archiverModule.default || archiverModule;
   const archive = archiver('zip', { zlib: { level: 9 } });
 
   archive.on('error', (err) => {
