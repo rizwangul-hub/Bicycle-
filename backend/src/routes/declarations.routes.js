@@ -6,6 +6,7 @@ const {
   getDeclarationById,
   updateDeclaration,
   deleteDeclaration,
+  getDeclarationCertificate,
 } = require('../controllers/declaration.controller');
 
 const router = express.Router();
@@ -14,6 +15,14 @@ const router = express.Router();
  * All declaration endpoints require authentication.
  */
 router.use(authenticate);
+
+/**
+ * GET /api/declarations/:id/certificate
+ * Return official, print-ready HTML certificate for a single declaration.
+ * SHOP_USER: allowed only for own shop.
+ * ADMIN: allowed for any shop.
+ */
+router.get('/:id/certificate', getDeclarationCertificate);
 
 /**
  * POST /api/declarations

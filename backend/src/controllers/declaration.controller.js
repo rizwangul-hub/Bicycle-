@@ -55,10 +55,29 @@ const deleteDeclaration = asyncHandler(async (req, res) => {
   res.status(200).json(result);
 });
 
+// GET /api/declarations/:id/certificate
+const getDeclarationCertificate = asyncHandler(async (req, res) => {
+  const declaration = await declarationService.getDeclarationById(req.params.id, req.user);
+  let attachments = [];
+  try {
+    const attachmentService = require('../services/attachment.service');
+    const attachResult = await attachmentService.getDeclarationAttachments(req.params.id, req.user);
+    attachments = attachResult.all || [];
+  } catch (attErr) {
+    // Non-fatal if attachments are empty
+  }
+
+  const { generateCertificateHtml } = require('../services/certificate.service');
+  const html = generateCertificateHtml(declaration, attachments);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.status(200).send(html);
+});
+
 module.exports = {
   createDeclaration,
   getDeclarations,
   getDeclarationById,
   updateDeclaration,
   deleteDeclaration,
+  getDeclarationCertificate,
 };

@@ -16,6 +16,7 @@ import { useDeclarations } from '@/hooks/useDeclarations';
 import { useAttachments } from '@/hooks/useAttachments';
 import { AttachmentCategorySection } from '@/components/AttachmentCategorySection';
 import { ImageViewerModal } from '@/components/ImageViewerModal';
+import { generateAndSharePdf } from '@/services/pdf.service';
 import { Colors, ColorTheme, Spacing } from '@/constants/theme';
 import type { Attachment, Declaration } from '@/types';
 
@@ -160,6 +161,27 @@ export default function DeclarationDetailScreen() {
     );
   };
 
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!declaration) return;
+    setExportingPdf(true);
+    try {
+      const allAttachments: Attachment[] = [
+        ...(uploadedGrouped.BICYCLE || []),
+        ...(uploadedGrouped.CUSTOMER || []),
+        ...(uploadedGrouped.ID || []),
+        ...(uploadedGrouped.ADDITIONAL || []),
+      ];
+      await generateAndSharePdf(declaration, allAttachments);
+    } catch (err: unknown) {
+      const e = err as Error;
+      Alert.alert('PDF Export Failed', e.message || 'Could not generate PDF certificate.');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -217,32 +239,52 @@ export default function DeclarationDetailScreen() {
             </Text>
           </View>
 
-          {/* Action buttons (Edit / Delete) */}
-          <View style={styles.cardActionsRow}>
+          {/* Action buttons (Download PDF / Edit / Delete) */}
+          <View style={styles.actionContainer}>
             <Pressable
               style={({ pressed }) => [
-                styles.editBtn,
-                { opacity: pressed ? 0.8 : 1 },
+                styles.pdfBtn,
+                { opacity: pressed || exportingPdf ? 0.75 : 1 },
               ]}
-              onPress={() => router.push(`/edit-declaration/${d._id}` as any)}
+              onPress={handleExportPdf}
+              disabled={exportingPdf}
             >
-              <Text style={styles.editBtnText}>✏️ Edit Declaration</Text>
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.deleteDeclBtn,
-                { opacity: pressed || deleting ? 0.7 : 1 },
-              ]}
-              onPress={handleDeleteDeclaration}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <ActivityIndicator size="small" color="#dc2626" />
+              {exportingPdf ? (
+                <>
+                  <ActivityIndicator size="small" color="#ffffff" />
+                  <Text style={styles.pdfBtnText}>Generating PDF Certificate...</Text>
+                </>
               ) : (
-                <Text style={styles.deleteDeclText}>🗑 Delete</Text>
+                <Text style={styles.pdfBtnText}>📄 Download / Share PDF Certificate</Text>
               )}
             </Pressable>
+
+            <View style={styles.cardActionsRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.editBtn,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+                onPress={() => router.push(`/edit-declaration/${d._id}` as any)}
+              >
+                <Text style={styles.editBtnText}>✏️ Edit Declaration</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.deleteDeclBtn,
+                  { opacity: pressed || deleting ? 0.7 : 1 },
+                ]}
+                onPress={handleDeleteDeclaration}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color="#dc2626" />
+                ) : (
+                  <Text style={styles.deleteDeclText}>🗑 Delete</Text>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -424,6 +466,29 @@ const styles = StyleSheet.create({
   shortId: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
   legalBadge: { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
   legalBadgeText: { fontSize: 13, fontWeight: '600' },
+
+  actionContainer: {
+    gap: 10,
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.08)',
+  },
+  pdfBtn: {
+    backgroundColor: '#1e3a8a',
+    borderRadius: 8,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  pdfBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 
   cardActionsRow: {
     flexDirection: 'row',

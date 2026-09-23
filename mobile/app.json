@@ -54,7 +54,8 @@
           "photosPermission": "Allow Pixx Bicycle App to access your photos to attach bicycle and customer evidence.",
           "cameraPermission": "Allow Pixx Bicycle App to use your camera to take bicycle and customer photos."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

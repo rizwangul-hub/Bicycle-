@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { declarationService } from '../services/declaration.service';
 import AdminLayout from '../components/AdminLayout';
+import { printCertificate } from '../utils/certificateTemplate';
 
 function formatDate(iso) {
   if (!iso) return 'Not provided';
@@ -264,6 +265,13 @@ export default function DeclarationDetail() {
               </div>
               <div style={styles.topActions}>
                 <span style={styles.shopBadge}>{shopName}</span>
+                <button
+                  onClick={() => printCertificate(declaration, attachmentsData?.all || [])}
+                  style={styles.pdfBtn}
+                  title="Generate, Print, or Save as PDF"
+                >
+                  📄 Download PDF Certificate
+                </button>
                 <button onClick={startEditing} style={styles.editBtn}>
                   ✏️ Edit Declaration
                 </button>
@@ -893,6 +901,20 @@ const styles = {
     backgroundColor: '#eff6ff',
     padding: '6px 12px',
     borderRadius: '6px',
+  },
+  pdfBtn: {
+    backgroundColor: '#1e3a8a',
+    border: '1px solid #172554',
+    borderRadius: '6px',
+    padding: '6px 14px',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#ffffff',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
   },
   editBtn: {
     backgroundColor: '#ffffff',
