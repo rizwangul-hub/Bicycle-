@@ -65,6 +65,28 @@ app.get('/', (req, res) => {
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// ── Database connection middleware (Serverless / Vercel) ──
+const connectDB = require('./config/db');
+
+app.use(async (req, res, next) => {
+  // Pass root, favicon, and health check without blocking on DB
+  if (req.path === '/' || req.path === '/favicon.ico' || req.path === '/api/health') {
+    return next();
+  }
+
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection error in middleware:', err.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Database connection failed. Please ensure MONGODB_URI is configured in Vercel Environment Variables and Network Access (0.0.0.0/0) is enabled in MongoDB Atlas.',
+      error: process.env.NODE_ENV === 'production' ? 'Database connection failure' : err.message,
+    });
+  }
+});
+
 // ── API routes ───────────────────────────────────────────
 app.use('/api', routes);
 

@@ -2,7 +2,7 @@
   "name": "pixx-bicycle-backend",
   "version": "1.0.0",
   "description": "Pixx Bicycle Owner's Declaration System — Backend API (PixxTechnologiees UK)",
-  "main": "src/server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
