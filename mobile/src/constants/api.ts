@@ -44,7 +44,7 @@ const resolveDevApiUrl = (): string => {
 };
 
 const DEV_API_URL = resolveDevApiUrl();
-const PROD_API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.bicycle.pixx.co.uk/api';
+const PROD_API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://bicycle-flax-chi.vercel.app/api';
 
 export const BASE_URL = __DEV__ ? DEV_API_URL : PROD_API_URL;
 
