@@ -444,6 +444,12 @@ export function buildMobileCertificateHtml(
 
 /**
  * Generate PDF and open native share sheet to save or send.
+ *
+ * Strategy:
+ *  1. Try printToFileAsync → copyAsync → shareAsync  (works in production APK)
+ *  2. On any error (Expo Go sandbox blocks file access), fall back to
+ *     Print.printAsync() which opens the Android/iOS native print dialog
+ *     where the user can tap "Save as PDF". This works in Expo Go.
  */
 export async function generateAndSharePdf(
   declaration: Declaration,
@@ -451,25 +457,29 @@ export async function generateAndSharePdf(
 ): Promise<void> {
   const html = buildMobileCertificateHtml(declaration, attachments);
 
-  // 1. Generate PDF file via expo-print (writes to a private temp directory)
-  const { uri: tempUri } = await Print.printToFileAsync({ html });
+  // ── Attempt 1: Generate file and share via native share sheet ──────────────
+  try {
+    const { uri: tempUri } = await Print.printToFileAsync({ html });
 
-  // 2. Copy to cacheDirectory so Android sharing can read it
-  //    (Android blocks shareAsync on files in expo-print's private dir)
-  const safeFileName = `declaration_${(declaration._id || 'cert').slice(-8).toUpperCase()}.pdf`;
-  const destUri = `${FileSystem.cacheDirectory}${safeFileName}`;
-  await FileSystem.copyAsync({ from: tempUri, to: destUri });
+    // Copy to a path the OS sharing system is allowed to read
+    const safeFileName = `declaration_${(declaration._id || 'cert').slice(-8).toUpperCase()}.pdf`;
+    const destUri = `${FileSystem.cacheDirectory}${safeFileName}`;
+    await FileSystem.copyAsync({ from: tempUri, to: destUri });
 
-  // 3. Share / save
-  const isAvailable = await Sharing.isAvailableAsync();
-  if (isAvailable) {
-    await Sharing.shareAsync(destUri, {
-      UTI: '.pdf',
-      mimeType: 'application/pdf',
-      dialogTitle: `Bicycle Declaration — ${declaration.customerName || 'Certificate'}`,
-    });
-  } else {
-    // Fallback: trigger print dialog directly
-    await Print.printAsync({ html });
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (isAvailable) {
+      await Sharing.shareAsync(destUri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf',
+        dialogTitle: `Bicycle Declaration — ${declaration.customerName || 'Certificate'}`,
+      });
+      return; // ✅ success — share sheet opened
+    }
+  } catch (_shareErr) {
+    // Expo Go sandbox blocks file access — fall through to print dialog
   }
+
+  // ── Fallback: Native print dialog (always works, including Expo Go) ─────────
+  // On Android/iOS the user can tap "Save as PDF" in the print dialog.
+  await Print.printAsync({ html });
 }
