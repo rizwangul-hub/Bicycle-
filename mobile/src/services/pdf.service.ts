@@ -8,6 +8,7 @@
 
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
 import type { Attachment, Declaration } from '@/types';
 
 function escapeHtml(str?: string | null): string {
@@ -450,15 +451,19 @@ export async function generateAndSharePdf(
 ): Promise<void> {
   const html = buildMobileCertificateHtml(declaration, attachments);
 
-  // 1. Generate PDF file via expo-print
-  const { uri } = await Print.printToFileAsync({
-    html,
-  });
+  // 1. Generate PDF file via expo-print (writes to a private temp directory)
+  const { uri: tempUri } = await Print.printToFileAsync({ html });
 
-  // 2. Check if sharing is available on this device
+  // 2. Copy to cacheDirectory so Android sharing can read it
+  //    (Android blocks shareAsync on files in expo-print's private dir)
+  const safeFileName = `declaration_${(declaration._id || 'cert').slice(-8).toUpperCase()}.pdf`;
+  const destUri = `${FileSystem.cacheDirectory}${safeFileName}`;
+  await FileSystem.copyAsync({ from: tempUri, to: destUri });
+
+  // 3. Share / save
   const isAvailable = await Sharing.isAvailableAsync();
   if (isAvailable) {
-    await Sharing.shareAsync(uri, {
+    await Sharing.shareAsync(destUri, {
       UTI: '.pdf',
       mimeType: 'application/pdf',
       dialogTitle: `Bicycle Declaration — ${declaration.customerName || 'Certificate'}`,
