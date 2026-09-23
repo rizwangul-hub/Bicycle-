@@ -84,11 +84,12 @@ class DeclarationService {
       throw createError(400, 'Invalid email address format');
     }
 
-    // Optional cost validation
-    let bicycleCost = cleanString(data.bicycleCost);
+    // Cost / Price validation and synchronization
+    let bicycleCost = cleanString(data.cyclePrice || data.bicycleCost);
     if (bicycleCost !== null && !isNaN(bicycleCost)) {
       bicycleCost = String(parseFloat(bicycleCost));
     }
+    const cyclePrice = bicycleCost;
 
     const newDeclaration = await Declaration.create({
       shopId,
@@ -111,6 +112,7 @@ class DeclarationService {
       bicycleSource: cleanString(data.bicycleSource),
       ownershipDuration: cleanString(data.ownershipDuration),
       bicycleCost,
+      cyclePrice,
       bicycleFault: cleanString(data.bicycleFault),
       legalOwnerConfirmed: Boolean(data.legalOwnerConfirmed),
     });
@@ -354,8 +356,10 @@ class DeclarationService {
     if (updateData.ownershipDuration !== undefined) {
       declaration.ownershipDuration = cleanString(updateData.ownershipDuration);
     }
-    if (updateData.bicycleCost !== undefined) {
-      declaration.bicycleCost = cleanString(updateData.bicycleCost);
+    if (updateData.bicycleCost !== undefined || updateData.cyclePrice !== undefined) {
+      const priceVal = cleanString(updateData.cyclePrice || updateData.bicycleCost);
+      declaration.bicycleCost = priceVal;
+      declaration.cyclePrice = priceVal;
     }
     if (updateData.bicycleFault !== undefined) {
       declaration.bicycleFault = cleanString(updateData.bicycleFault);

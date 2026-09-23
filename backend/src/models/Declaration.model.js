@@ -134,9 +134,14 @@ const declarationSchema = new mongoose.Schema(
       default: null,
     },
     /**
-     * bicycleCost — "How much did the bicycle cost you?" on the paper form.
+     * bicycleCost / cyclePrice — "How much did the bicycle cost you?" / Cycle Price.
      */
     bicycleCost: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    cyclePrice: {
       type: String,
       trim: true,
       default: null,

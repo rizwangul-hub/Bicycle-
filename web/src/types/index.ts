@@ -69,6 +69,7 @@ export interface Declaration {
   bicycleSource?: string;
   ownershipDuration?: string;
   bicycleCost?: string;
+  cyclePrice?: string;
   bicycleFault?: string;
   legalOwnerConfirmed: boolean;
   attachments: DeclarationAttachments;
