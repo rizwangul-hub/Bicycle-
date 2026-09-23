@@ -36,10 +36,40 @@ function formatDate(iso?: string | null): string {
   }
 }
 
-export function buildMobileCertificateHtml(
+/**
+ * Downloads a remote image URL and returns a base64 data URI string.
+ * Falls back to the original URL on any error (e.g. network failure).
+ */
+async function fetchImageAsBase64(url: string): Promise<string> {
+  if (!url || !url.startsWith('http')) return url;
+  try {
+    // Derive a stable temp filename from the URL
+    const ext = url.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+    const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? ext : 'jpg';
+    const tmpPath = `${FileSystem.cacheDirectory}img_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}.${safeExt}`;
+
+    const { uri: localUri } = await FileSystem.downloadAsync(url, tmpPath);
+    const base64 = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const mimeMap: Record<string, string> = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg',
+      png: 'image/png', gif: 'image/gif', webp: 'image/webp',
+    };
+    const mime = mimeMap[safeExt] || 'image/jpeg';
+    return `data:${mime};base64,${base64}`;
+  } catch {
+    return url; // fallback: use original URL
+  }
+}
+
+export async function buildMobileCertificateHtml(
   declaration: Declaration,
   attachments: Attachment[] = []
-): string {
+): Promise<string> {
   const refCode = declaration._id ? declaration._id.slice(-8).toUpperCase() : 'UNKNOWN';
   const shopName =
     typeof declaration.shopId === 'object' && declaration.shopId !== null
@@ -55,12 +85,20 @@ export function buildMobileCertificateHtml(
       : 'Authorized Staff';
   const dateStr = formatDate(declaration.date || declaration.createdAt);
 
-  const bicycleAttachments = attachments.filter((a) => a.category === 'BICYCLE');
-  const customerAttachments = attachments.filter((a) => a.category === 'CUSTOMER');
-  const idAttachments = attachments.filter((a) => a.category === 'ID');
-  const additionalAttachments = attachments.filter((a) => a.category === 'ADDITIONAL');
+  // ── Pre-fetch all images as base64 so the PDF WebView renders them offline ──
+  const attachmentsWithBase64 = await Promise.all(
+    attachments.map(async (att) => ({
+      ...att,
+      _base64Src: await fetchImageAsBase64(att.storageUrl),
+    }))
+  );
 
-  const renderPhotoGrid = (items: Attachment[], label: string) => {
+  const bicycleAttachments    = attachmentsWithBase64.filter((a) => a.category === 'BICYCLE');
+  const customerAttachments   = attachmentsWithBase64.filter((a) => a.category === 'CUSTOMER');
+  const idAttachments         = attachmentsWithBase64.filter((a) => a.category === 'ID');
+  const additionalAttachments = attachmentsWithBase64.filter((a) => a.category === 'ADDITIONAL');
+
+  const renderPhotoGrid = (items: typeof attachmentsWithBase64, label: string) => {
     if (!items || items.length === 0) return '';
     return `
       <div class="photo-category">
@@ -70,7 +108,7 @@ export function buildMobileCertificateHtml(
             .map(
               (item) => `
             <div class="photo-card">
-              <img src="${escapeHtml(item.storageUrl)}" alt="${escapeHtml(item.originalFileName || label)}" />
+              <img src="${item._base64Src}" alt="${escapeHtml(item.originalFileName || label)}" />
               <div class="photo-meta">${escapeHtml(item.originalFileName || 'Evidence')}</div>
             </div>
           `
@@ -446,8 +484,9 @@ export function buildMobileCertificateHtml(
  * Generate PDF and open native share sheet to save or send.
  *
  * Strategy:
- *  1. Try printToFileAsync → copyAsync → shareAsync  (works in production APK)
- *  2. On any error (Expo Go sandbox blocks file access), fall back to
+ *  1. Pre-fetch all attachment images as base64 data URIs (embedded in HTML).
+ *  2. Try printToFileAsync → copyAsync → shareAsync  (works in production APK).
+ *  3. On any error (Expo Go sandbox blocks file access), fall back to
  *     Print.printAsync() which opens the Android/iOS native print dialog
  *     where the user can tap "Save as PDF". This works in Expo Go.
  */
@@ -455,7 +494,8 @@ export async function generateAndSharePdf(
   declaration: Declaration,
   attachments: Attachment[] = []
 ): Promise<void> {
-  const html = buildMobileCertificateHtml(declaration, attachments);
+  // Build HTML with all images embedded as base64 (so WebView renders them offline)
+  const html = await buildMobileCertificateHtml(declaration, attachments);
 
   // ── Attempt 1: Generate file and share via native share sheet ──────────────
   try {
