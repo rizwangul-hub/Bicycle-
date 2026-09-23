@@ -15,10 +15,12 @@ app.use(helmet());
 // ── CORS ─────────────────────────────────────────────────
 // Allowed origins are read from environment variables.
 // Mobile apps (React Native) do not send an Origin header and are
-// permitted via the !origin check below.
 const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.ADMIN_WEB_URL,
+  'https://bicycle-uuue.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:8081',
 ].filter(Boolean);
 
 app.use(

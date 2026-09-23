@@ -3,8 +3,8 @@
  * Pixx Bicycle Owner's Declaration System — Admin Web Dashboard
  */
 
-const DEV_API_URL  = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const PROD_API_URL = import.meta.env.VITE_API_URL || 'https://api.bicycle.pixx.co.uk/api';
+const DEV_API_URL  = import.meta.env.VITE_API_URL || 'https://bicycle-flax-chi.vercel.app/api';
+const PROD_API_URL = import.meta.env.VITE_API_URL || 'https://bicycle-flax-chi.vercel.app/api';
 
 export const BASE_URL =
   import.meta.env.MODE === 'development' ? DEV_API_URL : PROD_API_URL;
