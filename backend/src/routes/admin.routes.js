@@ -20,8 +20,10 @@ router.get(
   '/dashboard',
   asyncHandler(async (req, res) => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
 
-    const [shops, userCount, totalDeclarations, recentCount, shopCounts, shopUserCounts] = await Promise.all([
+    const [shops, userCount, totalDeclarations, recentCount, shopCounts, shopUserCounts, allDeclarations] = await Promise.all([
       Shop.find().sort({ name: 1 }),
       User.countDocuments({ isActive: true }),
       Declaration.countDocuments(),
@@ -33,6 +35,7 @@ router.get(
         { $match: { role: 'SHOP_USER' } },
         { $group: { _id: '$shopId', count: { $sum: 1 } } },
       ]),
+      Declaration.find().select('shopId bicycleCost date createdAt').lean(),
     ]);
 
     const countMap = {};
@@ -45,6 +48,40 @@ router.get(
       userMap[String(uc._id)] = uc.count;
     });
 
+    // Parse bicycle cost string into numeric float (e.g. "£350.00" -> 350)
+    const parseCost = (val) => {
+      if (!val) return 0;
+      const cleaned = String(val).replace(/[^0-9.]/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    };
+
+    let todayPurchasedCount = 0;
+    let todayPurchasedAmount = 0;
+    let totalPurchasedAmount = 0;
+    const todayShopMetrics = {};
+
+    allDeclarations.forEach((decl) => {
+      const cost = parseCost(decl.bicycleCost);
+      totalPurchasedAmount += cost;
+
+      const createdTime = new Date(decl.createdAt);
+      const dateTime = decl.date ? new Date(decl.date) : null;
+      const isToday = createdTime >= startOfToday || (dateTime && dateTime >= startOfToday);
+
+      if (isToday) {
+        todayPurchasedCount += 1;
+        todayPurchasedAmount += cost;
+
+        const sId = String(decl.shopId);
+        if (!todayShopMetrics[sId]) {
+          todayShopMetrics[sId] = { count: 0, amount: 0 };
+        }
+        todayShopMetrics[sId].count += 1;
+        todayShopMetrics[sId].amount += cost;
+      }
+    });
+
     const shopsWithCounts = shops.map((shop) => ({
       _id: shop._id,
       name: shop.name,
@@ -55,6 +92,8 @@ router.get(
       email: shop.email,
       declarationCount: countMap[String(shop._id)] || 0,
       userCount: userMap[String(shop._id)] || 0,
+      todayPurchasedCount: todayShopMetrics[String(shop._id)]?.count || 0,
+      todayPurchasedAmount: Number((todayShopMetrics[String(shop._id)]?.amount || 0).toFixed(2)),
     }));
 
     res.status(200).json({
@@ -65,6 +104,10 @@ router.get(
         activeUsers: userCount,
         totalDeclarations,
         recentDeclarationsCount: recentCount,
+        // Daily Cycle Purchase Metrics
+        todayPurchasedCount,
+        todayPurchasedAmount: Number(todayPurchasedAmount.toFixed(2)),
+        totalPurchasedAmount: Number(totalPurchasedAmount.toFixed(2)),
         shops: shopsWithCounts,
       },
     });

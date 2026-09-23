@@ -101,6 +101,105 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* ── 0. Today's Bicycle Purchase Activity & Financials ── */}
+      <section style={styles.todaySection}>
+        <div style={styles.todayHeader}>
+          <div>
+            <div style={styles.todayBadge}>
+              <span style={styles.livePulse}>●</span> Real-Time Daily Financials
+            </div>
+            <h3 style={styles.todayTitle}>Today's Bicycle Purchase Overview</h3>
+            <p style={styles.todaySubtitle}>
+              Intake quantity and financial cost spent acquiring cycles from customers today across all shops.
+            </p>
+          </div>
+          <div style={styles.todayDateBadge}>
+            Today: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </div>
+        </div>
+
+        <div style={styles.todayGrid}>
+          {/* Today Cycles Purchased */}
+          <div style={styles.todayMetricCard}>
+            <div style={{ ...styles.todayIconWrap, backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+              🚲
+            </div>
+            <div style={styles.todayMetricInfo}>
+              <span style={styles.todayMetricLabel}>Cycles Purchased Today</span>
+              <div style={styles.todayMetricValueRow}>
+                <span style={styles.todayMetricValue}>
+                  {loadingStats ? '...' : stats?.todayPurchasedCount ?? 0}
+                </span>
+                <span style={styles.unitBadge}>Units</span>
+              </div>
+              <span style={styles.todayMetricMeta}>Bicycles acquired from customers today</span>
+            </div>
+          </div>
+
+          {/* Today Total Purchase Cost */}
+          <div style={styles.todayMetricCard}>
+            <div style={{ ...styles.todayIconWrap, backgroundColor: '#ecfdf5', color: '#059669' }}>
+              💷
+            </div>
+            <div style={styles.todayMetricInfo}>
+              <span style={styles.todayMetricLabel}>Total Purchase Cost Today</span>
+              <div style={styles.todayMetricValueRow}>
+                <span style={{ ...styles.todayMetricValue, color: '#059669' }}>
+                  {loadingStats
+                    ? '...'
+                    : `£${Number(stats?.todayPurchasedAmount ?? 0).toLocaleString('en-GB', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
+                </span>
+              </div>
+              <span style={styles.todayMetricMeta}>Cash paid out to customers today</span>
+            </div>
+          </div>
+
+          {/* Average Cost per Cycle Today */}
+          <div style={styles.todayMetricCard}>
+            <div style={{ ...styles.todayIconWrap, backgroundColor: '#fef3c7', color: '#d97706' }}>
+              ⚖️
+            </div>
+            <div style={styles.todayMetricInfo}>
+              <span style={styles.todayMetricLabel}>Avg Purchase Cost / Unit</span>
+              <div style={styles.todayMetricValueRow}>
+                <span style={{ ...styles.todayMetricValue, color: '#b45309' }}>
+                  {loadingStats
+                    ? '...'
+                    : stats?.todayPurchasedCount > 0
+                    ? `£${(stats.todayPurchasedAmount / stats.todayPurchasedCount).toFixed(2)}`
+                    : '£0.00'}
+                </span>
+              </div>
+              <span style={styles.todayMetricMeta}>Average price paid per bicycle today</span>
+            </div>
+          </div>
+
+          {/* All-Time Total Recorded Purchase Cost */}
+          <div style={styles.todayMetricCard}>
+            <div style={{ ...styles.todayIconWrap, backgroundColor: '#f3e8ff', color: '#7e22ce' }}>
+              💼
+            </div>
+            <div style={styles.todayMetricInfo}>
+              <span style={styles.todayMetricLabel}>Total Recorded Purchase Value</span>
+              <div style={styles.todayMetricValueRow}>
+                <span style={{ ...styles.todayMetricValue, color: '#6b21a8' }}>
+                  {loadingStats
+                    ? '...'
+                    : `£${Number(stats?.totalPurchasedAmount ?? 0).toLocaleString('en-GB', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`}
+                </span>
+              </div>
+              <span style={styles.todayMetricMeta}>Across all {stats?.totalDeclarations ?? 0} recorded declarations</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── 1. Summary Statistics Cards ────────────────── */}
       <section style={styles.statsGrid}>
         {/* Total Shops */}
@@ -185,9 +284,20 @@ export default function Dashboard() {
                 <div style={styles.shopMetricsRow}>
                   <div>
                     <span style={styles.countNumber}>{shop.declarationCount}</span>
-                    <span style={styles.countLabel}>Declarations</span>
+                    <span style={styles.countLabel}>Total Records</span>
                   </div>
-                  <span style={styles.activePill}>Active</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '15px', fontWeight: '700', color: shop.todayPurchasedCount > 0 ? '#059669' : '#64748b' }}>
+                      {shop.todayPurchasedCount > 0
+                        ? `+${shop.todayPurchasedCount} today`
+                        : '0 today'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
+                      {shop.todayPurchasedCount > 0
+                        ? `£${Number(shop.todayPurchasedAmount || 0).toFixed(2)}`
+                        : 'No intake'}
+                    </span>
+                  </div>
                 </div>
                 <div style={styles.shopItemFooter}>
                   <button
@@ -264,6 +374,7 @@ export default function Dashboard() {
                   <th style={styles.th}>Customer</th>
                   <th style={styles.th}>Bicycle</th>
                   <th style={styles.th}>Frame #</th>
+                  <th style={styles.th}>Purchase Cost</th>
                   <th style={styles.th}>Shop</th>
                   <th style={styles.th}>Date</th>
                   <th style={styles.th}>Action</th>
@@ -291,6 +402,15 @@ export default function Dashboard() {
                       <td style={styles.td}>🚲 {bike || '—'}</td>
                       <td style={styles.td}>
                         <span style={styles.mono}>{decl.frameNumber || 'Not specified'}</span>
+                      </td>
+                      <td style={styles.td}>
+                        {decl.bicycleCost ? (
+                          <span style={styles.costBadge}>
+                            £{decl.bicycleCost.replace(/[^0-9.]/g, '') || decl.bicycleCost}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>
+                        )}
                       </td>
                       <td style={styles.td}>
                         <span style={styles.shopBadge}>{shopName}</span>
@@ -665,5 +785,130 @@ const styles = {
     fontSize: '14px',
     backgroundColor: '#f8fafc',
     borderRadius: '8px',
+  },
+  costBadge: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: '#047857',
+    backgroundColor: '#ecfdf5',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    display: 'inline-block',
+  },
+  todaySection: {
+    backgroundColor: '#ffffff',
+    borderRadius: '14px',
+    border: '1px solid #cbd5e1',
+    padding: '24px',
+    marginBottom: '28px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+    background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+  },
+  todayHeader: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '12px',
+    marginBottom: '20px',
+    paddingBottom: '16px',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  todayBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.6px',
+    color: '#0369a1',
+    backgroundColor: '#e0f2fe',
+    padding: '3px 9px',
+    borderRadius: '12px',
+    marginBottom: '6px',
+  },
+  livePulse: {
+    color: '#0284c7',
+    fontSize: '12px',
+  },
+  todayTitle: {
+    margin: '2px 0 0 0',
+    fontSize: '20px',
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  todaySubtitle: {
+    margin: '4px 0 0 0',
+    fontSize: '13px',
+    color: '#64748b',
+  },
+  todayDateBadge: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#334155',
+    backgroundColor: '#f1f5f9',
+    border: '1px solid #e2e8f0',
+    padding: '6px 14px',
+    borderRadius: '20px',
+  },
+  todayGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+    gap: '16px',
+  },
+  todayMetricCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: '10px',
+    border: '1px solid #e2e8f0',
+    padding: '16px 18px',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '14px',
+    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+  },
+  todayIconWrap: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    flexShrink: 0,
+  },
+  todayMetricInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    flex: 1,
+  },
+  todayMetricLabel: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.4px',
+  },
+  todayMetricValueRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '8px',
+    margin: '2px 0',
+  },
+  todayMetricValue: {
+    fontSize: '24px',
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  unitBadge: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  todayMetricMeta: {
+    fontSize: '11px',
+    color: '#94a3b8',
+    lineHeight: '14px',
   },
 };
