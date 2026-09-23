@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,8 +16,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 import { useDeclarations } from '@/hooks/useDeclarations';
+import { useAuth } from '@/context/AuthContext';
+import uploadService, { LocalPickedFile } from '@/services/upload.service';
 import { Colors, ColorTheme, Spacing } from '@/constants/theme';
 import type { CreateDeclarationInput } from '@/services/declaration.service';
 
@@ -39,34 +43,46 @@ interface FieldProps {
   value: string;
   onChange: (v: string) => void;
   required?: boolean;
-  placeholder?: string;
   multiline?: boolean;
-  keyboardType?: TextInput['props']['keyboardType'];
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'decimal-pad';
+  placeholder?: string;
   colors: ColorTheme;
 }
+
 function Field({
-  label, value, onChange, required, placeholder, multiline, keyboardType, colors,
+  label,
+  value,
+  onChange,
+  required,
+  multiline,
+  keyboardType = 'default',
+  placeholder,
+  colors,
 }: FieldProps) {
   return (
     <View style={f.wrap}>
-      <Text style={[f.label, { color: colors.textSecondary }]}>
-        {label}{required && <Text style={f.req}> *</Text>}
+      <Text style={[f.label, { color: colors.text }]}>
+        {label}
+        {required && <Text style={f.req}> *</Text>}
       </Text>
       <TextInput
         style={[
           f.input,
-          { backgroundColor: colors.backgroundElement, color: colors.text },
           multiline && f.multiline,
+          {
+            backgroundColor: colors.backgroundElement,
+            color: colors.text,
+            borderColor: colors.backgroundSelected,
+            borderWidth: 1,
+          },
         ]}
         value={value}
         onChangeText={onChange}
-        placeholder={placeholder ?? label}
+        placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
+        keyboardType={keyboardType}
         multiline={multiline}
         numberOfLines={multiline ? 3 : 1}
-        keyboardType={keyboardType}
-        autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
-        autoCorrect={false}
         returnKeyType={multiline ? 'default' : 'next'}
       />
     </View>
@@ -87,59 +103,147 @@ export default function CreateDeclarationScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const { createDeclaration } = useDeclarations();
+  const { token } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
-  // ── Form state ──────────────────────────────
-  const [customerName,           setCustomerName]           = useState('');
+  // ── 6 Mandatory Fields State ─────────────────
+  const [customerName,    setCustomerName]    = useState('');
+  const [phone,           setPhone]           = useState('');
+  const [bicycleMake,     setBicycleMake]     = useState('');
+  const [bicycleModel,    setBicycleModel]    = useState('');
+  const [customerIdPhoto, setCustomerIdPhoto] = useState<LocalPickedFile | null>(null);
+  const [cyclePrice,      setCyclePrice]      = useState('');
+
+  // ── Optional Fields State ────────────────────
   const [date,                   setDate]                   = useState('');
   const [address,                setAddress]                = useState('');
-  const [phone,                  setPhone]                  = useState('');
   const [cashPurchasePageNo,     setCashPurchasePageNo]     = useState('');
   const [email,                  setEmail]                  = useState('');
   const [mobile,                 setMobile]                 = useState('');
   const [postcode,               setPostcode]               = useState('');
-  const [bicycleMake,            setBicycleMake]            = useState('');
-  const [bicycleModel,           setBicycleModel]           = useState('');
   const [bicycleColour,          setBicycleColour]          = useState('');
   const [frameNumber,            setFrameNumber]            = useState('');
   const [distinguishingMarkings, setDistinguishingMarkings] = useState('');
   const [bicycleSource,          setBicycleSource]          = useState('');
   const [ownershipDuration,      setOwnershipDuration]      = useState('');
-  const [bicycleCost,            setBicycleCost]            = useState('');
   const [bicycleFault,           setBicycleFault]           = useState('');
   const [legalOwnerConfirmed,    setLegalOwnerConfirmed]    = useState(false);
+
+  // ── Pick Customer ID Photo (Camera or Gallery) ──
+  const pickIdPhoto = async (source: 'camera' | 'gallery') => {
+    try {
+      if (source === 'camera') {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert(
+            'Camera Permission Required',
+            'Camera access is required to photograph the customer ID document.'
+          );
+          return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: false,
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          setCustomerIdPhoto({
+            uri: asset.uri,
+            name: asset.fileName || `id_${Date.now()}.jpg`,
+            mimeType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          });
+        }
+      } else {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert(
+            'Gallery Permission Required',
+            'Photo library access is required to select the customer ID picture.'
+          );
+          return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsMultipleSelection: false,
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          setCustomerIdPhoto({
+            uri: asset.uri,
+            name: asset.fileName || `id_${Date.now()}.jpg`,
+            mimeType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          });
+        }
+      }
+    } catch {
+      Alert.alert('Error', 'Could not open camera or gallery. Please try again.');
+    }
+  };
 
   // ── Validation & submit ─────────────────────
   const handleSubmit = async () => {
     const name  = customerName.trim();
+    const ph    = phone.trim();
+    const make  = bicycleMake.trim();
     const model = bicycleModel.trim();
+    const price = cyclePrice.trim();
 
+    // 1) Mandatory Customer Name
     if (!name) {
-      Alert.alert('Missing Field', 'Customer name is required.');
+      Alert.alert('Missing Mandatory Field', '1) Customer Name is required.');
       return;
     }
+    // 2) Mandatory Phone Number
+    if (!ph) {
+      Alert.alert('Missing Mandatory Field', '2) Phone Number is required.');
+      return;
+    }
+    // 3) Mandatory Cycle Make
+    if (!make) {
+      Alert.alert('Missing Mandatory Field', '3) Cycle Make is required.');
+      return;
+    }
+    // 4) Mandatory Model
     if (!model) {
-      Alert.alert('Missing Field', 'Bicycle model is required.');
+      Alert.alert('Missing Mandatory Field', '4) Model is required.');
+      return;
+    }
+    // 5) Mandatory Customer ID picture
+    if (!customerIdPhoto) {
+      Alert.alert(
+        'Missing Mandatory Field',
+        '5) Customer ID picture is required. Please capture with camera or select from gallery.'
+      );
+      return;
+    }
+    // 6) Mandatory Cycle Price
+    if (!price) {
+      Alert.alert('Missing Mandatory Field', '6) Cycle Price is required.');
       return;
     }
 
     const input: CreateDeclarationInput = {
-      customerName: name,
-      bicycleModel: model,
+      customerName:           name,
+      phone:                  ph,
+      bicycleMake:            make,
+      bicycleModel:           model,
+      bicycleCost:            price,
+      cyclePrice:             price,
       date:                   date.trim()                   || undefined,
       address:                address.trim()                || undefined,
-      phone:                  phone.trim()                  || undefined,
       cashPurchasePageNo:     cashPurchasePageNo.trim()     || undefined,
       email:                  email.trim()                  || undefined,
       mobile:                 mobile.trim()                 || undefined,
       postcode:               postcode.trim()               || undefined,
-      bicycleMake:            bicycleMake.trim()            || undefined,
       bicycleColour:          bicycleColour.trim()          || undefined,
       frameNumber:            frameNumber.trim()            || undefined,
       distinguishingMarkings: distinguishingMarkings.trim() || undefined,
       bicycleSource:          bicycleSource.trim()          || undefined,
       ownershipDuration:      ownershipDuration.trim()      || undefined,
-      bicycleCost:            bicycleCost.trim()            || undefined,
       bicycleFault:           bicycleFault.trim()           || undefined,
       legalOwnerConfirmed,
     };
@@ -147,24 +251,37 @@ export default function CreateDeclarationScreen() {
     setSubmitting(true);
     try {
       const created = await createDeclaration(input);
+      if (!created?._id) {
+        throw new Error('Declaration creation failed.');
+      }
+
+      // Upload mandatory Customer ID photo
+      if (token && customerIdPhoto) {
+        try {
+          await uploadService.uploadAttachments(created._id, 'ID', [customerIdPhoto], token);
+        } catch (uploadErr) {
+          console.warn('ID photo upload warning:', uploadErr);
+          Alert.alert(
+            'Declaration Saved (ID Upload Notice)',
+            'Declaration was saved, but ID photo upload had a connection issue. You can retry uploading on the details screen.',
+            [{ text: 'OK', onPress: () => router.replace(`/declaration/${created._id}` as any) }]
+          );
+          return;
+        }
+      }
+
       Alert.alert(
         'Declaration Saved',
-        'The bicycle owner\'s declaration has been recorded successfully. Would you like to attach photos now?',
+        'The declaration and Customer ID picture have been successfully recorded.',
         [
           {
-            text: 'Finish',
-            style: 'cancel',
-            onPress: () => router.back(),
+            text: 'View Declaration',
+            onPress: () => router.replace(`/declaration/${created._id}` as any),
           },
           {
-            text: 'Add Photos',
-            onPress: () => {
-              if (created?._id) {
-                router.replace(`/declaration/${created._id}` as any);
-              } else {
-                router.back();
-              }
-            },
+            text: 'Done',
+            style: 'cancel',
+            onPress: () => router.back(),
           },
         ]
       );
@@ -188,27 +305,142 @@ export default function CreateDeclarationScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Section 1: Customer ─────────────── */}
+          {/* ── Mandatory Summary Banner ──────────── */}
+          <View style={[styles.mandBanner, { backgroundColor: colors.backgroundElement }]}>
+            <Text style={styles.mandBannerTitle}>📌 6 Mandatory Fields</Text>
+            <Text style={[styles.mandBannerText, { color: colors.textSecondary }]}>
+              Customer Name, Phone Number, Cycle Make, Model, Customer ID Picture, and Cycle Price are required.
+            </Text>
+          </View>
+
+          {/* ── Section 1: Customer Information ──── */}
           <SectionHeader label="Section 1 — Customer Information" colors={colors} />
-          <Field label="Full Name" value={customerName} onChange={setCustomerName} required colors={colors} placeholder="e.g. John Smith" />
+          <Field
+            label="Customer Name"
+            value={customerName}
+            onChange={setCustomerName}
+            required
+            colors={colors}
+            placeholder="e.g. John Smith"
+          />
+          <Field
+            label="Phone Number"
+            value={phone}
+            onChange={setPhone}
+            required
+            keyboardType="phone-pad"
+            colors={colors}
+            placeholder="e.g. 07123456789"
+          />
+
+          {/* ── Mandatory Customer ID Photo Picker ─ */}
+          <View style={styles.idPhotoContainer}>
+            <View style={styles.idPhotoHeader}>
+              <Text style={[styles.idPhotoTitle, { color: colors.text }]}>
+                Customer ID Picture <Text style={{ color: '#dc2626' }}>*</Text>
+              </Text>
+              <View style={styles.mandBadge}>
+                <Text style={styles.mandBadgeText}>Mandatory</Text>
+              </View>
+            </View>
+            <Text style={[styles.idPhotoSub, { color: colors.textSecondary }]}>
+              Capture or upload driving licence, passport, or national ID.
+            </Text>
+
+            {customerIdPhoto ? (
+              <View style={[styles.idPreviewBox, { backgroundColor: colors.backgroundElement }]}>
+                <Image source={{ uri: customerIdPhoto.uri }} style={styles.idPreviewImage} />
+                <View style={styles.idPreviewDetails}>
+                  <Text style={[styles.idFileName, { color: colors.text }]} numberOfLines={1}>
+                    {customerIdPhoto.name || 'customer_id.jpg'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '700' }}>
+                    ✓ Customer ID Photo Attached
+                  </Text>
+                  <View style={styles.idActionRow}>
+                    <Pressable
+                      style={styles.retakeBtn}
+                      onPress={() => pickIdPhoto('camera')}
+                    >
+                      <Text style={styles.retakeText}>📷 Retake</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.retakeBtn}
+                      onPress={() => pickIdPhoto('gallery')}
+                    >
+                      <Text style={styles.retakeText}>🖼️ Change</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.removeBtn}
+                      onPress={() => setCustomerIdPhoto(null)}
+                    >
+                      <Text style={styles.removeText}>🗑 Remove</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={[styles.idEmptyBox, { backgroundColor: colors.backgroundElement }]}>
+                <Text style={[styles.idEmptyText, { color: colors.textSecondary }]}>
+                  ⚠️ Customer ID picture required. Please take a photo or choose from gallery.
+                </Text>
+                <View style={styles.idPickButtonsRow}>
+                  <Pressable
+                    style={[styles.pickBtn, { backgroundColor: '#1a56db' }]}
+                    onPress={() => pickIdPhoto('camera')}
+                  >
+                    <Text style={styles.pickBtnText}>📷 Open Camera</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.pickBtn, { backgroundColor: '#475569' }]}
+                    onPress={() => pickIdPhoto('gallery')}
+                  >
+                    <Text style={styles.pickBtnText}>🖼️ Choose Gallery</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </View>
+
           <Field label="Date" value={date} onChange={setDate} colors={colors} placeholder="DD/MM/YYYY" />
           <Field label="Address" value={address} onChange={setAddress} multiline colors={colors} />
-          <Field label="Phone" value={phone} onChange={setPhone} keyboardType="phone-pad" colors={colors} />
           <Field label="Mobile" value={mobile} onChange={setMobile} keyboardType="phone-pad" colors={colors} />
           <Field label="Email" value={email} onChange={setEmail} keyboardType="email-address" colors={colors} />
           <Field label="Postcode" value={postcode} onChange={setPostcode} colors={colors} />
           <Field label="Cash Purchase Page No." value={cashPurchasePageNo} onChange={setCashPurchasePageNo} colors={colors} />
 
-          {/* ── Section 2: Bicycle ──────────────── */}
+          {/* ── Section 2: Bicycle Information ──── */}
           <SectionHeader label="Section 2 — Bicycle Information" colors={colors} />
-          <Field label="Bicycle Make" value={bicycleMake} onChange={setBicycleMake} colors={colors} placeholder="e.g. Trek" />
-          <Field label="Bicycle Model" value={bicycleModel} onChange={setBicycleModel} required colors={colors} placeholder="e.g. FX3 Disc" />
+          <Field
+            label="Cycle Make"
+            value={bicycleMake}
+            onChange={setBicycleMake}
+            required
+            colors={colors}
+            placeholder="e.g. Trek, Giant, Specialized"
+          />
+          <Field
+            label="Model"
+            value={bicycleModel}
+            onChange={setBicycleModel}
+            required
+            colors={colors}
+            placeholder="e.g. FX3 Disc"
+          />
+          <Field
+            label="Cycle Price (£)"
+            value={cyclePrice}
+            onChange={setCyclePrice}
+            required
+            keyboardType="decimal-pad"
+            colors={colors}
+            placeholder="e.g. 350.00"
+          />
           <Field label="Colour" value={bicycleColour} onChange={setBicycleColour} colors={colors} />
           <Field label="Frame Number" value={frameNumber} onChange={setFrameNumber} colors={colors} />
           <Field label="Distinguishing Markings" value={distinguishingMarkings} onChange={setDistinguishingMarkings} multiline colors={colors} />
           <Field label="Where did you get the bicycle?" value={bicycleSource} onChange={setBicycleSource} multiline colors={colors} />
           <Field label="How long have you had the bicycle?" value={ownershipDuration} onChange={setOwnershipDuration} colors={colors} placeholder="e.g. 2 years" />
-          <Field label="How much did the bicycle cost you?" value={bicycleCost} onChange={setBicycleCost} keyboardType="decimal-pad" colors={colors} placeholder="e.g. 350.00" />
           <Field label="Any fault with the bike?" value={bicycleFault} onChange={setBicycleFault} multiline colors={colors} />
 
           {/* ── Section 3: Owner Declaration ────── */}
@@ -239,7 +471,10 @@ export default function CreateDeclarationScreen() {
             disabled={submitting}
           >
             {submitting ? (
-              <ActivityIndicator color="#fff" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <ActivityIndicator color="#fff" />
+                <Text style={styles.submitText}>Saving Declaration & ID...</Text>
+              </View>
             ) : (
               <Text style={styles.submitText}>Save Declaration</Text>
             )}
@@ -255,6 +490,141 @@ export default function CreateDeclarationScreen() {
 const styles = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { padding: Spacing.three, gap: Spacing.two },
+
+  // Mandatory banner
+  mandBanner: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    padding: 12,
+    marginBottom: 4,
+    gap: 4,
+  },
+  mandBannerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1a56db',
+  },
+  mandBannerText: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
+  // Customer ID Photo Picker
+  idPhotoContainer: {
+    marginTop: 6,
+    marginBottom: 6,
+    gap: 6,
+  },
+  idPhotoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  idPhotoTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  idPhotoSub: {
+    fontSize: 12,
+  },
+  mandBadge: {
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  mandBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#dc2626',
+    textTransform: 'uppercase',
+  },
+  idPreviewBox: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 10,
+    gap: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#16a34a',
+  },
+  idPreviewImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    backgroundColor: '#e2e8f0',
+  },
+  idPreviewDetails: {
+    flex: 1,
+    gap: 4,
+  },
+  idFileName: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  idActionRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+    flexWrap: 'wrap',
+  },
+  retakeBtn: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  retakeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  removeBtn: {
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+  },
+  removeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#dc2626',
+  },
+  idEmptyBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f87171',
+    borderStyle: 'dashed',
+    padding: 14,
+    alignItems: 'center',
+    gap: 10,
+  },
+  idEmptyText: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  idPickButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  pickBtn: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
 
   // Legal
   legalRow: {

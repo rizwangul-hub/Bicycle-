@@ -105,6 +105,7 @@ export default function EditDeclarationScreen() {
   const [bicycleSource,          setBicycleSource]          = useState('');
   const [ownershipDuration,      setOwnershipDuration]      = useState('');
   const [bicycleCost,            setBicycleCost]            = useState('');
+  const [cyclePrice,             setCyclePrice]             = useState('');
   const [bicycleFault,           setBicycleFault]           = useState('');
   const [legalOwnerConfirmed,    setLegalOwnerConfirmed]    = useState(false);
 
@@ -132,6 +133,7 @@ export default function EditDeclarationScreen() {
         setBicycleSource(d.bicycleSource || '');
         setOwnershipDuration(d.ownershipDuration || '');
         setBicycleCost(d.bicycleCost || '');
+        setCyclePrice(d.cyclePrice || d.bicycleCost || '');
         setBicycleFault(d.bicycleFault || '');
         setLegalOwnerConfirmed(Boolean(d.legalOwnerConfirmed));
       })
@@ -150,35 +152,51 @@ export default function EditDeclarationScreen() {
 
   const handleUpdate = async () => {
     const name  = customerName.trim();
+    const ph    = phone.trim();
+    const make  = bicycleMake.trim();
     const model = bicycleModel.trim();
+    const price = cyclePrice.trim();
 
     if (!name) {
-      Alert.alert('Missing Field', 'Customer name is required.');
+      Alert.alert('Missing Mandatory Field', '1) Customer Name is required.');
+      return;
+    }
+    if (!ph) {
+      Alert.alert('Missing Mandatory Field', '2) Phone Number is required.');
+      return;
+    }
+    if (!make) {
+      Alert.alert('Missing Mandatory Field', '3) Cycle Make is required.');
       return;
     }
     if (!model) {
-      Alert.alert('Missing Field', 'Bicycle model is required.');
+      Alert.alert('Missing Mandatory Field', '4) Model is required.');
+      return;
+    }
+    if (!price) {
+      Alert.alert('Missing Mandatory Field', '5) Cycle Price is required.');
       return;
     }
     if (!id) return;
 
     const input: Partial<CreateDeclarationInput> = {
-      customerName: name,
-      bicycleModel: model,
+      customerName:           name,
+      phone:                  ph,
+      bicycleMake:            make,
+      bicycleModel:           model,
+      bicycleCost:            price,
+      cyclePrice:             price,
       date:                   date.trim()                   || undefined,
       address:                address.trim()                || undefined,
-      phone:                  phone.trim()                  || undefined,
       cashPurchasePageNo:     cashPurchasePageNo.trim()     || undefined,
       email:                  email.trim()                  || undefined,
       mobile:                 mobile.trim()                 || undefined,
       postcode:               postcode.trim()               || undefined,
-      bicycleMake:            bicycleMake.trim()            || undefined,
       bicycleColour:          bicycleColour.trim()          || undefined,
       frameNumber:            frameNumber.trim()            || undefined,
       distinguishingMarkings: distinguishingMarkings.trim() || undefined,
       bicycleSource:          bicycleSource.trim()          || undefined,
       ownershipDuration:      ownershipDuration.trim()      || undefined,
-      bicycleCost:            bicycleCost.trim()            || undefined,
       bicycleFault:           bicycleFault.trim()           || undefined,
       legalOwnerConfirmed,
     };
@@ -222,27 +240,27 @@ export default function EditDeclarationScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Section 1: Customer ─────────────── */}
+          {/* ── Section 1: Customer Information ──── */}
           <SectionHeader label="Section 1 — Customer Information" colors={colors} />
-          <Field label="Full Name" value={customerName} onChange={setCustomerName} required colors={colors} />
+          <Field label="Customer Name" value={customerName} onChange={setCustomerName} required colors={colors} />
+          <Field label="Phone Number" value={phone} onChange={setPhone} required keyboardType="phone-pad" colors={colors} placeholder="e.g. 07123456789" />
           <Field label="Date" value={date} onChange={setDate} colors={colors} placeholder="DD/MM/YYYY" />
           <Field label="Address" value={address} onChange={setAddress} multiline colors={colors} />
-          <Field label="Phone" value={phone} onChange={setPhone} keyboardType="phone-pad" colors={colors} />
           <Field label="Mobile" value={mobile} onChange={setMobile} keyboardType="phone-pad" colors={colors} />
           <Field label="Email" value={email} onChange={setEmail} keyboardType="email-address" colors={colors} />
           <Field label="Postcode" value={postcode} onChange={setPostcode} colors={colors} />
           <Field label="Cash Purchase Page No." value={cashPurchasePageNo} onChange={setCashPurchasePageNo} colors={colors} />
 
-          {/* ── Section 2: Bicycle ──────────────── */}
+          {/* ── Section 2: Bicycle Information ──── */}
           <SectionHeader label="Section 2 — Bicycle Information" colors={colors} />
-          <Field label="Bicycle Make" value={bicycleMake} onChange={setBicycleMake} colors={colors} />
-          <Field label="Bicycle Model" value={bicycleModel} onChange={setBicycleModel} required colors={colors} />
+          <Field label="Cycle Make" value={bicycleMake} onChange={setBicycleMake} required colors={colors} placeholder="e.g. Trek, Giant, Specialized" />
+          <Field label="Model" value={bicycleModel} onChange={setBicycleModel} required colors={colors} placeholder="e.g. FX3 Disc" />
+          <Field label="Cycle Price (£)" value={cyclePrice} onChange={setCyclePrice} required keyboardType="decimal-pad" colors={colors} placeholder="e.g. 350.00" />
           <Field label="Colour" value={bicycleColour} onChange={setBicycleColour} colors={colors} />
           <Field label="Frame Number" value={frameNumber} onChange={setFrameNumber} colors={colors} />
           <Field label="Distinguishing Markings" value={distinguishingMarkings} onChange={setDistinguishingMarkings} multiline colors={colors} />
           <Field label="Where did you get the bicycle?" value={bicycleSource} onChange={setBicycleSource} multiline colors={colors} />
           <Field label="How long have you had the bicycle?" value={ownershipDuration} onChange={setOwnershipDuration} colors={colors} />
-          <Field label="How much did the bicycle cost you?" value={bicycleCost} onChange={setBicycleCost} keyboardType="decimal-pad" colors={colors} />
           <Field label="Any fault with the bike?" value={bicycleFault} onChange={setBicycleFault} multiline colors={colors} />
 
           {/* ── Section 3: Owner Declaration ────── */}
