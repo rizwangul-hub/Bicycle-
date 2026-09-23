@@ -50,6 +50,21 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// ── Root / Health check for browser & monitoring ────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Pixx Bicycle Owner's Declaration API is live",
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth:   '/api/auth/login',
+    },
+  });
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // ── API routes ───────────────────────────────────────────
 app.use('/api', routes);
 
