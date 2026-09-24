@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
 import {
   Login,
   Dashboard,
@@ -9,6 +10,12 @@ import {
   Declarations,
   DeclarationDetail,
 } from './pages';
+import {
+  AdminDashboard,
+  AdminShops,
+  AdminUsers,
+  AdminDeclarations,
+} from './pages/admin';
 import './App.css';
 
 function App() {
@@ -19,7 +26,7 @@ function App() {
           {/* Public Route */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected Routes (Shop Staff) */}
+          {/* Protected Shop Staff Routes */}
           <Route
             path="/"
             element={
@@ -50,6 +57,40 @@ function App() {
               <ProtectedRoute>
                 <DeclarationDetail />
               </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Admin Routes (Full Access for ADMIN role) */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/declarations"
+            element={
+              <AdminRoute>
+                <AdminDeclarations />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/shops"
+            element={
+              <AdminRoute>
+                <AdminShops />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <AdminUsers />
+              </AdminRoute>
             }
           />
 
