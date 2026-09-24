@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import logoImg from '../assets/image/logo.png';
 
 export function AdminLayout({ children }) {
   const { user, logout } = useAuth();
@@ -30,7 +31,9 @@ export function AdminLayout({ children }) {
         <div style={styles.headerInner}>
           <div style={styles.brandRow}>
             <Link to="/admin/dashboard" style={styles.brandLink}>
-              <div style={styles.brandLogo}>🚲</div>
+              <div style={styles.brandLogo}>
+                <img src={logoImg} alt="Logo" style={styles.brandLogoImg} />
+              </div>
               <div>
                 <span style={styles.brandTag}>PixxTechnologiees UK</span>
                 <h1 style={styles.brandTitle}>Bicycle Owner Declarations</h1>
@@ -172,12 +175,19 @@ const styles = {
     width: '42px',
     height: '42px',
     borderRadius: '10px',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '22px',
+    padding: '4px',
+    overflow: 'hidden',
+  },
+  brandLogoImg: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain',
   },
   brandTag: {
     display: 'block',

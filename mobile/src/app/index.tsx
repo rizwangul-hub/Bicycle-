@@ -1,4 +1,5 @@
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -31,8 +32,12 @@ export default function DashboardScreen() {
 
         {/* ── Header ───────────────────────────────── */}
         <View style={styles.header}>
-          <View style={[styles.badge, { backgroundColor: '#1a56db' }]}>
-            <Text style={styles.badgeEmoji}>🚲</Text>
+          <View style={[styles.badge, { backgroundColor: '#ffffff' }]}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <Text style={[styles.brand, { color: '#1a56db' }]}>PixxTechnologiees</Text>
           <Text style={[styles.shopName, { color: colors.text }]}>{shopName}</Text>
@@ -113,14 +118,25 @@ const styles = StyleSheet.create({
   // Header
   header: { alignItems: 'center', paddingVertical: Spacing.three, gap: Spacing.two },
   badge: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  badgeEmoji: { fontSize: 36 },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
   brand: { fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   shopName: { fontSize: 26, fontWeight: '800', textAlign: 'center', lineHeight: 32 },
   shopPill: {

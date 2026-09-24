@@ -1,25 +1,14 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { LoadingScreen } from './LoadingScreen';
 
 export function ProtectedRoute({ children }) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        minHeight: '100vh',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        background: '#f8fafc',
-        color: '#64748b'
-      }}>
-        <div>Loading Admin Portal...</div>
-      </div>
-    );
+    return <LoadingScreen message="Verifying administrative session..." />;
   }
 
   if (!isAuthenticated || !user || user.role !== 'ADMIN') {

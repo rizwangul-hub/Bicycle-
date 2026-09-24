@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -143,6 +144,25 @@ export default function DeclarationsScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      {/* ── Top Header ────────────────────── */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <View style={styles.logoBadge}>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+          <View>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Declarations</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+              Bicycle Owner Records
+            </Text>
+          </View>
+        </View>
+      </View>
+
       {/* ── Search Bar ────────────────────── */}
       <View style={[styles.searchBar, { backgroundColor: colors.backgroundElement }]}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -293,6 +313,50 @@ export default function DeclarationsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.one,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 38,
+    height: 38,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    marginTop: 1,
+  },
 
   // Search
   searchBar: {

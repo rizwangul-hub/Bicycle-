@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import logoImg from '../assets/image/logo.png';
 
 export default function Login() {
   const { login } = useAuth();
@@ -38,7 +39,9 @@ export default function Login() {
     <div style={styles.pageContainer}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <div style={styles.logoBadge}>🚲</div>
+          <div style={styles.logoWrapper}>
+            <img src={logoImg} alt="Pixx Logo" style={styles.logoImage} />
+          </div>
           <span style={styles.brandTitle}>PixxTechnologiees</span>
           <h1 style={styles.mainTitle}>Admin Dashboard</h1>
           <p style={styles.subtitle}>Bicycle Owner's Declaration System</p>
@@ -122,17 +125,23 @@ const styles = {
     textAlign: 'center',
     marginBottom: '28px',
   },
-  logoBadge: {
+  logoWrapper: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '56px',
-    height: '56px',
-    background: '#2563eb',
-    color: '#ffffff',
-    borderRadius: '14px',
-    fontSize: '28px',
+    width: '76px',
+    height: '76px',
+    background: '#ffffff',
+    borderRadius: '16px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+    padding: '8px',
     marginBottom: '12px',
+    border: '1px solid #e2e8f0',
+  },
+  logoImage: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain',
   },
   brandTitle: {
     display: 'block',

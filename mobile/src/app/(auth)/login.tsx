@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -58,7 +59,11 @@ export default function LoginScreen() {
           {/* ── Header ─────────────────────────────── */}
           <View style={styles.header}>
             <View style={styles.logoBox}>
-              <Text style={styles.logoText}>🚲</Text>
+              <Image
+                source={require('@/assets/images/logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
             <Text style={styles.brand}>PixxTechnologiees</Text>
             <Text style={styles.title}>Bicycle Owner's{'\n'}Declaration System</Text>
@@ -151,16 +156,25 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.five,
   },
   logoBox: {
-    width: 80,
-    height: 80,
+    width: 84,
+    height: 84,
     borderRadius: 20,
-    backgroundColor: PRIMARY,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.three,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  logoText: {
-    fontSize: 40,
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   brand: {
     fontSize: 13,
