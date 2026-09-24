@@ -5,18 +5,16 @@ import { useEffect } from 'react';
 
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
-
 function NavigationGuard() {
   const { user, isLoading } = useAuth();
   const router   = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
-    if (isLoading) return;
-
-    // Immediately dismiss splash screen once session is checked
+    // Immediately dismiss native splash screen so Expo Go never hangs at 99%
     SplashScreen.hideAsync().catch(() => {});
+
+    if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -68,6 +66,10 @@ function NavigationGuard() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   return (
     <AuthProvider>
