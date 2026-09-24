@@ -1,18 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Slot, Stack, useRouter, useSegments } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 import { useEffect } from 'react';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-
-SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /**
  * Navigation guard — redirects to login when unauthenticated.
  *
  * Logic:
- *  - isLoading:     keep splash overlay visible (return null)
+ *  - isLoading:     waiting for session check (return null)
  *  - user === null: redirect to /(auth)/login
  *  - user exists:   render the authenticated stack layout
  */
@@ -63,7 +59,6 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
         <NavigationGuard />
       </ThemeProvider>
     </AuthProvider>
