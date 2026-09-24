@@ -47,7 +47,6 @@ interface FieldProps {
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'decimal-pad';
   placeholder?: string;
   colors: ColorTheme;
-  error?: string | null;
 }
 
 function Field({
@@ -59,10 +58,7 @@ function Field({
   keyboardType = 'default',
   placeholder,
   colors,
-  error,
 }: FieldProps) {
-  const hasError = Boolean(error);
-
   return (
     <View style={f.wrap}>
       <Text style={[f.label, { color: colors.text }]}>
@@ -76,8 +72,8 @@ function Field({
           {
             backgroundColor: colors.backgroundElement,
             color: colors.text,
-            borderColor: hasError ? '#dc2626' : colors.backgroundSelected,
-            borderWidth: hasError ? 1.5 : 1,
+            borderColor: colors.backgroundSelected,
+            borderWidth: 1,
           },
         ]}
         value={value}
@@ -89,7 +85,6 @@ function Field({
         numberOfLines={multiline ? 3 : 1}
         returnKeyType={multiline ? 'default' : 'next'}
       />
-      {hasError && <Text style={f.errText}>⚠️ {error}</Text>}
     </View>
   );
 }
@@ -99,7 +94,6 @@ const f = StyleSheet.create({
   req:       { color: '#dc2626' },
   input:     { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, minHeight: 46 },
   multiline: { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 },
-  errText:   { color: '#dc2626', fontSize: 12, fontWeight: '600', marginTop: 2 },
 });
 
 // ─── Create Declaration Screen ───────────────────────────
@@ -112,24 +106,13 @@ export default function CreateDeclarationScreen() {
   const { token } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
-  // ── Form State ──────────────────────────────
+  // ── 6 Mandatory Fields State ─────────────────
   const [customerName,    setCustomerName]    = useState('');
   const [phone,           setPhone]           = useState('');
   const [bicycleMake,     setBicycleMake]     = useState('');
   const [bicycleModel,    setBicycleModel]    = useState('');
   const [customerIdPhoto, setCustomerIdPhoto] = useState<LocalPickedFile | null>(null);
   const [cyclePrice,      setCyclePrice]      = useState('');
-  const [submitted,       setSubmitted]       = useState(false);
-
-  // ── Inline Validation Errors ─────────────────
-  const errors = {
-    customerName:    submitted && !customerName.trim()    ? 'This field is required' : null,
-    phone:           submitted && !phone.trim()           ? 'This field is required' : null,
-    bicycleMake:     submitted && !bicycleMake.trim()     ? 'This field is required' : null,
-    bicycleModel:    submitted && !bicycleModel.trim()    ? 'This field is required' : null,
-    cyclePrice:      submitted && !cyclePrice.trim()      ? 'This field is required' : null,
-    customerIdPhoto: submitted && !customerIdPhoto        ? 'Customer ID picture is required' : null,
-  };
 
   // ── Bicycle & Additional Photos State ────────
   const [bicyclePhotos,   setBicyclePhotos]   = useState<LocalPickedFile[]>([]);
@@ -311,27 +294,43 @@ export default function CreateDeclarationScreen() {
 
   // ── Validation & submit ─────────────────────
   const handleSubmit = async () => {
-    setSubmitted(true);
-
     const name  = customerName.trim();
     const ph    = phone.trim();
     const make  = bicycleMake.trim();
     const model = bicycleModel.trim();
     const price = cyclePrice.trim();
 
-    const missingList: string[] = [];
-    if (!name) missingList.push('Customer Name');
-    if (!ph) missingList.push('Phone Number');
-    if (!customerIdPhoto) missingList.push('Customer ID Picture');
-    if (!make) missingList.push('Cycle Make');
-    if (!model) missingList.push('Model');
-    if (!price) missingList.push('Cycle Price');
-
-    if (missingList.length > 0) {
+    // 1) Mandatory Customer Name
+    if (!name) {
+      Alert.alert('Missing Mandatory Field', '1) Customer Name is required.');
+      return;
+    }
+    // 2) Mandatory Phone Number
+    if (!ph) {
+      Alert.alert('Missing Mandatory Field', '2) Phone Number is required.');
+      return;
+    }
+    // 3) Mandatory Cycle Make
+    if (!make) {
+      Alert.alert('Missing Mandatory Field', '3) Cycle Make is required.');
+      return;
+    }
+    // 4) Mandatory Model
+    if (!model) {
+      Alert.alert('Missing Mandatory Field', '4) Model is required.');
+      return;
+    }
+    // 5) Mandatory Customer ID picture
+    if (!customerIdPhoto) {
       Alert.alert(
-        'Required Information Missing',
-        `Please complete the following required field(s):\n\n• ${missingList.join('\n• ')}`
+        'Missing Mandatory Field',
+        '5) Customer ID picture is required. Please capture with camera or select from gallery.'
       );
+      return;
+    }
+    // 6) Mandatory Cycle Price
+    if (!price) {
+      Alert.alert('Missing Mandatory Field', '6) Cycle Price is required.');
       return;
     }
 
@@ -421,6 +420,14 @@ export default function CreateDeclarationScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* ── Mandatory Summary Banner ──────────── */}
+          <View style={[styles.mandBanner, { backgroundColor: colors.backgroundElement }]}>
+            <Text style={styles.mandBannerTitle}>📌 6 Mandatory Fields</Text>
+            <Text style={[styles.mandBannerText, { color: colors.textSecondary }]}>
+              Customer Name, Phone Number, Cycle Make, Model, Customer ID Picture, and Cycle Price are required.
+            </Text>
+          </View>
+
           {/* ── Section 1: Customer Information ──── */}
           <SectionHeader label="Section 1 — Customer Information" colors={colors} />
           <Field
@@ -430,7 +437,6 @@ export default function CreateDeclarationScreen() {
             required
             colors={colors}
             placeholder="e.g. John Smith"
-            error={errors.customerName}
           />
           <Field
             label="Phone Number"
@@ -440,15 +446,17 @@ export default function CreateDeclarationScreen() {
             keyboardType="phone-pad"
             colors={colors}
             placeholder="e.g. 07123456789"
-            error={errors.phone}
           />
 
-          {/* ── Customer ID Photo Picker ─────────── */}
+          {/* ── Mandatory Customer ID Photo Picker ─ */}
           <View style={styles.idPhotoContainer}>
             <View style={styles.idPhotoHeader}>
               <Text style={[styles.idPhotoTitle, { color: colors.text }]}>
                 Customer ID Picture <Text style={{ color: '#dc2626' }}>*</Text>
               </Text>
+              <View style={styles.mandBadge}>
+                <Text style={styles.mandBadgeText}>Mandatory</Text>
+              </View>
             </View>
             <Text style={[styles.idPhotoSub, { color: colors.textSecondary }]}>
               Capture or upload driving licence, passport, or national ID.
@@ -487,27 +495,9 @@ export default function CreateDeclarationScreen() {
                 </View>
               </View>
             ) : (
-              <View
-                style={[
-                  styles.idEmptyBox,
-                  { backgroundColor: colors.backgroundElement },
-                  errors.customerIdPhoto
-                    ? { borderColor: '#dc2626', borderWidth: 1.5, backgroundColor: 'rgba(220, 38, 38, 0.04)' }
-                    : null,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.idEmptyText,
-                    {
-                      color: errors.customerIdPhoto ? '#dc2626' : colors.textSecondary,
-                      fontWeight: errors.customerIdPhoto ? '600' : '400',
-                    },
-                  ]}
-                >
-                  {errors.customerIdPhoto
-                    ? '⚠️ Customer ID picture is required. Please take a photo or choose from gallery.'
-                    : 'Take a photo or choose from gallery.'}
+              <View style={[styles.idEmptyBox, { backgroundColor: colors.backgroundElement }]}>
+                <Text style={[styles.idEmptyText, { color: colors.textSecondary }]}>
+                  ⚠️ Customer ID picture required. Please take a photo or choose from gallery.
                 </Text>
                 <View style={styles.idPickButtonsRow}>
                   <Pressable
@@ -543,7 +533,6 @@ export default function CreateDeclarationScreen() {
             required
             colors={colors}
             placeholder="e.g. Trek, Giant, Specialized"
-            error={errors.bicycleMake}
           />
           <Field
             label="Model"
@@ -552,7 +541,6 @@ export default function CreateDeclarationScreen() {
             required
             colors={colors}
             placeholder="e.g. FX3 Disc"
-            error={errors.bicycleModel}
           />
           <Field
             label="Cycle Price (£)"
@@ -562,7 +550,6 @@ export default function CreateDeclarationScreen() {
             keyboardType="decimal-pad"
             colors={colors}
             placeholder="e.g. 350.00"
-            error={errors.cyclePrice}
           />
 
           {/* ── Bicycle Photos Picker ────────────── */}
@@ -721,6 +708,25 @@ const styles = StyleSheet.create({
   safe:   { flex: 1 },
   scroll: { padding: Spacing.three, gap: Spacing.two },
 
+  // Mandatory banner
+  mandBanner: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    padding: 12,
+    marginBottom: 4,
+    gap: 4,
+  },
+  mandBannerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1a56db',
+  },
+  mandBannerText: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
   // Customer ID Photo Picker
   idPhotoContainer: {
     marginTop: 6,
@@ -738,6 +744,18 @@ const styles = StyleSheet.create({
   },
   idPhotoSub: {
     fontSize: 12,
+  },
+  mandBadge: {
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  mandBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#dc2626',
+    textTransform: 'uppercase',
   },
   idPreviewBox: {
     flexDirection: 'row',
@@ -797,7 +815,7 @@ const styles = StyleSheet.create({
   idEmptyBox: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#f87171',
     borderStyle: 'dashed',
     padding: 14,
     alignItems: 'center',
