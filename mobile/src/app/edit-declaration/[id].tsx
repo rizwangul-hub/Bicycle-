@@ -158,23 +158,23 @@ export default function EditDeclarationScreen() {
     const price = cyclePrice.trim();
 
     if (!name) {
-      Alert.alert('Missing Mandatory Field', '1) Customer Name is required.');
+      Alert.alert('Required Field', 'Customer Name is required.');
       return;
     }
     if (!ph) {
-      Alert.alert('Missing Mandatory Field', '2) Phone Number is required.');
+      Alert.alert('Required Field', 'Phone Number is required.');
       return;
     }
     if (!make) {
-      Alert.alert('Missing Mandatory Field', '3) Cycle Make is required.');
+      Alert.alert('Required Field', 'Cycle Make is required.');
       return;
     }
     if (!model) {
-      Alert.alert('Missing Mandatory Field', '4) Model is required.');
+      Alert.alert('Required Field', 'Model is required.');
       return;
     }
     if (!price) {
-      Alert.alert('Missing Mandatory Field', '5) Cycle Price is required.');
+      Alert.alert('Required Field', 'Cycle Price is required.');
       return;
     }
     if (!id) return;

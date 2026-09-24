@@ -118,7 +118,7 @@ export default function CreateDeclarationScreen() {
   const [bicyclePhotos,   setBicyclePhotos]   = useState<LocalPickedFile[]>([]);
   const [receiptPhotos,   setReceiptPhotos]   = useState<LocalPickedFile[]>([]);
 
-  // ── Optional Fields State ────────────────────
+  // ── Additional Fields State ──────────────────
   const [date,                   setDate]                   = useState('');
   const [address,                setAddress]                = useState('');
   const [cashPurchasePageNo,     setCashPurchasePageNo]     = useState('');
@@ -300,37 +300,37 @@ export default function CreateDeclarationScreen() {
     const model = bicycleModel.trim();
     const price = cyclePrice.trim();
 
-    // 1) Mandatory Customer Name
+    // 1) Customer Name
     if (!name) {
-      Alert.alert('Missing Mandatory Field', '1) Customer Name is required.');
+      Alert.alert('Required Field', 'Customer Name is required.');
       return;
     }
-    // 2) Mandatory Phone Number
+    // 2) Phone Number
     if (!ph) {
-      Alert.alert('Missing Mandatory Field', '2) Phone Number is required.');
+      Alert.alert('Required Field', 'Phone Number is required.');
       return;
     }
-    // 3) Mandatory Cycle Make
+    // 3) Cycle Make
     if (!make) {
-      Alert.alert('Missing Mandatory Field', '3) Cycle Make is required.');
+      Alert.alert('Required Field', 'Cycle Make is required.');
       return;
     }
-    // 4) Mandatory Model
+    // 4) Model
     if (!model) {
-      Alert.alert('Missing Mandatory Field', '4) Model is required.');
+      Alert.alert('Required Field', 'Model is required.');
       return;
     }
-    // 5) Mandatory Customer ID picture
+    // 5) Customer ID picture
     if (!customerIdPhoto) {
       Alert.alert(
-        'Missing Mandatory Field',
-        '5) Customer ID picture is required. Please capture with camera or select from gallery.'
+        'Required Field',
+        'Customer ID picture is required. Please capture with camera or select from gallery.'
       );
       return;
     }
-    // 6) Mandatory Cycle Price
+    // 6) Cycle Price
     if (!price) {
-      Alert.alert('Missing Mandatory Field', '6) Cycle Price is required.');
+      Alert.alert('Required Field', 'Cycle Price is required.');
       return;
     }
 
@@ -420,14 +420,6 @@ export default function CreateDeclarationScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Mandatory Summary Banner ──────────── */}
-          <View style={[styles.mandBanner, { backgroundColor: colors.backgroundElement }]}>
-            <Text style={styles.mandBannerTitle}>📌 6 Mandatory Fields</Text>
-            <Text style={[styles.mandBannerText, { color: colors.textSecondary }]}>
-              Customer Name, Phone Number, Cycle Make, Model, Customer ID Picture, and Cycle Price are required.
-            </Text>
-          </View>
-
           {/* ── Section 1: Customer Information ──── */}
           <SectionHeader label="Section 1 — Customer Information" colors={colors} />
           <Field
@@ -448,15 +440,12 @@ export default function CreateDeclarationScreen() {
             placeholder="e.g. 07123456789"
           />
 
-          {/* ── Mandatory Customer ID Photo Picker ─ */}
+          {/* ── Customer ID Photo Picker ─ */}
           <View style={styles.idPhotoContainer}>
             <View style={styles.idPhotoHeader}>
               <Text style={[styles.idPhotoTitle, { color: colors.text }]}>
                 Customer ID Picture <Text style={{ color: '#dc2626' }}>*</Text>
               </Text>
-              <View style={styles.mandBadge}>
-                <Text style={styles.mandBadgeText}>Mandatory</Text>
-              </View>
             </View>
             <Text style={[styles.idPhotoSub, { color: colors.textSecondary }]}>
               Capture or upload driving licence, passport, or national ID.
@@ -558,9 +547,6 @@ export default function CreateDeclarationScreen() {
               <Text style={[styles.photoBlockTitle, { color: colors.text }]}>
                 Bicycle Photos (Frame, Serial, Angles)
               </Text>
-              <View style={[styles.optBadge, { backgroundColor: colors.backgroundElement }]}>
-                <Text style={[styles.optBadgeText, { color: colors.textSecondary }]}>Optional</Text>
-              </View>
             </View>
             <Text style={[styles.photoBlockSub, { color: colors.textSecondary }]}>
               Attach photos of the complete bicycle, frame number, or markings.
@@ -616,9 +602,6 @@ export default function CreateDeclarationScreen() {
               <Text style={[styles.photoBlockTitle, { color: colors.text }]}>
                 Receipts / Invoices / Purchase Evidence
               </Text>
-              <View style={[styles.optBadge, { backgroundColor: colors.backgroundElement }]}>
-                <Text style={[styles.optBadgeText, { color: colors.textSecondary }]}>Optional</Text>
-              </View>
             </View>
             <Text style={[styles.photoBlockSub, { color: colors.textSecondary }]}>
               Attach store invoice, cash payment note, or other purchase records.
