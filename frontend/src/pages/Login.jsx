@@ -103,8 +103,39 @@ export const Login = () => {
           </button>
         </form>
 
+        <div style={styles.infoCard}>
+          <div style={styles.infoHeader}>
+            <span style={styles.infoIcon}>📋</span>
+            <span style={styles.infoTitle}>What is Included in This Portal?</span>
+          </div>
+          <p style={styles.infoDescription}>
+            Official bicycle ownership verification and anti-theft registry system for authorized PixxTechnologiees retail stores:
+          </p>
+          <ul style={styles.infoList}>
+            <li style={styles.infoListItem}>
+              <strong>📄 Digital Declaration Form:</strong> Customer contact details and signed proof-of-purchase declaration.
+            </li>
+            <li style={styles.infoListItem}>
+              <strong>📸 4-Point Photo Verification:</strong> Customer Photo, Photo ID, Bicycle, and Purchase Documentation.
+            </li>
+            <li style={styles.infoListItem}>
+              <strong>🚲 Frame & Serial Tracking:</strong> Anti-theft ownership records retrievable by police and shop staff.
+            </li>
+            <li style={styles.infoListItem}>
+              <strong>🏪 6 Partner Branches:</strong> Station Cycles, Camden Cycles, Chelsea Bikes, Edgware Cycles, Southwark Cycles, and Leebridge Cycles.
+            </li>
+          </ul>
+
+          <div style={styles.pwaTip}>
+            <span style={styles.pwaTipIcon}>📲</span>
+            <span style={styles.pwaTipText}>
+              <strong>iPhone / Mobile App:</strong> Tap Safari Share (<span style={{ fontSize: '13px' }}>⬆️</span>) &rarr; <strong>"Add to Home Screen"</strong> to use as an app without App Store fees.
+            </span>
+          </div>
+        </div>
+
         <p style={styles.footerNote}>
-          Authorized shop staff portal for Station Cycles, Camden Cycles, Chelsea Bikes, Edgware Cycles, Southwark Cycles, and Leebridge Cycles.
+          Authorized shop staff portal &copy; {new Date().getFullYear()} PixxTechnologiees. All rights reserved.
         </p>
       </div>
     </div>
@@ -239,10 +270,72 @@ const styles = {
     touchAction: 'manipulation',
   },
   footerNote: {
-    margin: '24px 0 0 0',
+    margin: '20px 0 0 0',
     fontSize: '11px',
     color: '#94a3b8',
     textAlign: 'center',
     lineHeight: '1.4',
+  },
+  infoCard: {
+    marginTop: '24px',
+    padding: '16px',
+    backgroundColor: '#f8fafc',
+    borderRadius: '16px',
+    border: '1px solid #e2e8f0',
+    width: '100%',
+    boxSizing: 'border-box',
+    textAlign: 'left',
+  },
+  infoHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '8px',
+  },
+  infoIcon: {
+    fontSize: '16px',
+  },
+  infoTitle: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  infoDescription: {
+    fontSize: '12px',
+    color: '#64748b',
+    margin: '0 0 10px 0',
+    lineHeight: '1.45',
+  },
+  infoList: {
+    margin: '0 0 12px 0',
+    paddingLeft: '18px',
+    fontSize: '12px',
+    color: '#334155',
+    lineHeight: '1.5',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  infoListItem: {
+    lineHeight: '1.4',
+  },
+  pwaTip: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '10px',
+    padding: '10px 12px',
+    marginTop: '8px',
+  },
+  pwaTipIcon: {
+    fontSize: '16px',
+    lineHeight: '1.2',
+  },
+  pwaTipText: {
+    fontSize: '11.5px',
+    color: '#1e40af',
+    lineHeight: '1.45',
   },
 };
