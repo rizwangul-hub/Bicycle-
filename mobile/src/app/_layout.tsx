@@ -1,20 +1,15 @@
-import { DarkTheme, DefaultTheme, ThemeProvider, Slot, Stack, useRouter, useSegments } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
+import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter, useSegments } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { useEffect } from 'react';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
-
 /**
- * Navigation guard — redirects to login when unauthenticated.
- *
- * Logic:
- *  - isLoading:     keep splash overlay visible (return null)
- *  - user === null: redirect to /(auth)/login
- *  - user exists:   render the authenticated stack layout
+ * Navigation guard — redirects to login when unauthenticated,
+ * and redirects to dashboard when authenticated.
+ * 
+ * Always mounts the Root Stack Navigator immediately so Expo Router
+ * and Expo Go never hang during startup.
  */
 function NavigationGuard() {
   const { user, isLoading } = useAuth();
@@ -33,12 +28,9 @@ function NavigationGuard() {
     }
   }, [user, isLoading, segments]);
 
-  if (isLoading) return null;
-  if (!user)     return <Slot />;
-
-  // Authenticated: Stack manages all app screens
   return (
     <Stack>
+      <Stack.Screen name="(auth)"       options={{ headerShown: false }} />
       <Stack.Screen name="index"        options={{ headerShown: false }} />
       <Stack.Screen name="declarations" options={{ headerShown: false }} />
       <Stack.Screen
@@ -63,7 +55,6 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
         <NavigationGuard />
       </ThemeProvider>
     </AuthProvider>
