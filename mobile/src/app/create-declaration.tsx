@@ -112,6 +112,7 @@ export default function CreateDeclarationScreen() {
   const [bicycleMake,     setBicycleMake]     = useState('');
   const [bicycleModel,    setBicycleModel]    = useState('');
   const [customerIdPhoto, setCustomerIdPhoto] = useState<LocalPickedFile | null>(null);
+  const [customerPhoto,   setCustomerPhoto]   = useState<LocalPickedFile | null>(null);
   const [cyclePrice,      setCyclePrice]      = useState('');
 
   // ── Bicycle & Additional Photos State ────────
@@ -178,6 +179,61 @@ export default function CreateDeclarationScreen() {
           setCustomerIdPhoto({
             uri: asset.uri,
             name: asset.fileName || `id_${Date.now()}.jpg`,
+            mimeType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          });
+        }
+      }
+    } catch {
+      Alert.alert('Error', 'Could not open camera or gallery. Please try again.');
+    }
+  };
+
+  // ── Pick Customer Photo (Camera or Gallery) ─────
+  const pickCustomerPhoto = async (source: 'camera' | 'gallery') => {
+    try {
+      if (source === 'camera') {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert(
+            'Camera Permission Required',
+            'Camera access is required to photograph the customer.'
+          );
+          return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: false,
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          setCustomerPhoto({
+            uri: asset.uri,
+            name: asset.fileName || `customer_${Date.now()}.jpg`,
+            mimeType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          });
+        }
+      } else {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert(
+            'Gallery Permission Required',
+            'Photo library access is required to select the customer photo.'
+          );
+          return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsMultipleSelection: false,
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          setCustomerPhoto({
+            uri: asset.uri,
+            name: asset.fileName || `customer_${Date.now()}.jpg`,
             mimeType: asset.mimeType || 'image/jpeg',
             size: asset.fileSize,
           });
@@ -363,7 +419,7 @@ export default function CreateDeclarationScreen() {
         throw new Error('Declaration creation failed.');
       }
 
-      // 1) Upload mandatory Customer ID photo
+      // 1) Upload Customer ID photo
       if (token && customerIdPhoto) {
         try {
           await uploadService.uploadAttachments(created._id, 'ID', [customerIdPhoto], token);
@@ -372,7 +428,16 @@ export default function CreateDeclarationScreen() {
         }
       }
 
-      // 2) Upload Bicycle photos if attached
+      // 2) Upload Customer photo if attached
+      if (token && customerPhoto) {
+        try {
+          await uploadService.uploadAttachments(created._id, 'CUSTOMER', [customerPhoto], token);
+        } catch (uploadErr) {
+          console.warn('Customer photo upload warning:', uploadErr);
+        }
+      }
+
+      // 3) Upload Bicycle photos if attached
       if (token && bicyclePhotos.length > 0) {
         try {
           await uploadService.uploadAttachments(created._id, 'BICYCLE', bicyclePhotos, token);
@@ -381,12 +446,12 @@ export default function CreateDeclarationScreen() {
         }
       }
 
-      // 3) Upload Receipt photos if attached
+      // 4) Upload Other Document photos if attached
       if (token && receiptPhotos.length > 0) {
         try {
           await uploadService.uploadAttachments(created._id, 'ADDITIONAL', receiptPhotos, token);
         } catch (uploadErr) {
-          console.warn('Receipt upload warning:', uploadErr);
+          console.warn('Other documents upload warning:', uploadErr);
         }
       }
 
@@ -506,6 +571,72 @@ export default function CreateDeclarationScreen() {
             )}
           </View>
 
+          {/* ── Customer Picture Picker ──────────── */}
+          <View style={styles.idPhotoContainer}>
+            <View style={styles.idPhotoHeader}>
+              <Text style={[styles.idPhotoTitle, { color: colors.text }]}>
+                Customer Picture
+              </Text>
+            </View>
+            <Text style={[styles.idPhotoSub, { color: colors.textSecondary }]}>
+              Capture customer photograph at the time of transaction.
+            </Text>
+
+            {customerPhoto ? (
+              <View style={[styles.idPreviewBox, { backgroundColor: colors.backgroundElement }]}>
+                <Image source={{ uri: customerPhoto.uri }} style={styles.idPreviewImage} />
+                <View style={styles.idPreviewDetails}>
+                  <Text style={[styles.idFileName, { color: colors.text }]} numberOfLines={1}>
+                    {customerPhoto.name || 'customer.jpg'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '700' }}>
+                    ✓ Customer Picture Attached
+                  </Text>
+                  <View style={styles.idActionRow}>
+                    <Pressable
+                      style={styles.retakeBtn}
+                      onPress={() => pickCustomerPhoto('camera')}
+                    >
+                      <Text style={styles.retakeText}>📷 Retake</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.retakeBtn}
+                      onPress={() => pickCustomerPhoto('gallery')}
+                    >
+                      <Text style={styles.retakeText}>🖼️ Change</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.removeBtn}
+                      onPress={() => setCustomerPhoto(null)}
+                    >
+                      <Text style={styles.removeText}>🗑 Remove</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={[styles.idEmptyBox, { backgroundColor: colors.backgroundElement }]}>
+                <Text style={[styles.idEmptyText, { color: colors.textSecondary }]}>
+                  Please take a customer photo or choose from gallery.
+                </Text>
+                <View style={styles.idPickButtonsRow}>
+                  <Pressable
+                    style={[styles.pickBtn, { backgroundColor: '#1a56db' }]}
+                    onPress={() => pickCustomerPhoto('camera')}
+                  >
+                    <Text style={styles.pickBtnText}>📷 Open Camera</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.pickBtn, { backgroundColor: '#475569' }]}
+                    onPress={() => pickCustomerPhoto('gallery')}
+                  >
+                    <Text style={styles.pickBtnText}>🖼️ Choose Gallery</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </View>
+
           <Field label="Date" value={date} onChange={setDate} colors={colors} placeholder="DD/MM/YYYY" />
           <Field label="Address" value={address} onChange={setAddress} multiline colors={colors} />
           <Field label="Mobile" value={mobile} onChange={setMobile} keyboardType="phone-pad" colors={colors} />
@@ -595,16 +726,16 @@ export default function CreateDeclarationScreen() {
           <Field label="How long have you had the bicycle?" value={ownershipDuration} onChange={setOwnershipDuration} colors={colors} placeholder="e.g. 2 years" />
           <Field label="Any fault with the bike?" value={bicycleFault} onChange={setBicycleFault} multiline colors={colors} />
 
-          {/* ── Section 3: Receipts & Purchase Proof ─ */}
-          <SectionHeader label="Section 3 — Receipts & Purchase Proof" colors={colors} />
+          {/* ── Section 3: Other Document Pictures ── */}
+          <SectionHeader label="Section 3 — Other Document Pictures" colors={colors} />
           <View style={styles.photoBlock}>
             <View style={styles.photoBlockHeader}>
               <Text style={[styles.photoBlockTitle, { color: colors.text }]}>
-                Receipts / Invoices / Purchase Evidence
+                Other Document Pictures (Receipts, Invoices, Proof)
               </Text>
             </View>
             <Text style={[styles.photoBlockSub, { color: colors.textSecondary }]}>
-              Attach store invoice, cash payment note, or other purchase records.
+              Attach store invoice, cash payment note, or other document pictures.
             </Text>
 
             {receiptPhotos.length > 0 && (
@@ -620,7 +751,7 @@ export default function CreateDeclarationScreen() {
                       <Text style={styles.thumbDeleteText}>✕</Text>
                     </Pressable>
                     <Text style={[styles.thumbName, { color: colors.text }]} numberOfLines={1}>
-                      {photo.name || `Receipt ${idx + 1}`}
+                      {photo.name || `Document ${idx + 1}`}
                     </Text>
                   </View>
                 ))}
@@ -632,7 +763,7 @@ export default function CreateDeclarationScreen() {
                 style={[styles.pickBtn, { backgroundColor: '#1a56db' }]}
                 onPress={() => pickReceiptPhoto('camera')}
               >
-                <Text style={styles.pickBtnText}>📷 Take Receipt Photo</Text>
+                <Text style={styles.pickBtnText}>📷 Take Document</Text>
               </Pressable>
               <Pressable
                 style={[styles.pickBtn, { backgroundColor: '#475569' }]}
