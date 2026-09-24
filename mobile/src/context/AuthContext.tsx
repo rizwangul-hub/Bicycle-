@@ -47,23 +47,35 @@ const TOKEN_KEY = 'pixx_auth_token';
 
 const storage = {
   save: async (token: string) => {
-    if (Platform.OS === 'web') {
-      localStorage.setItem(TOKEN_KEY, token);
-    } else {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.setItem(TOKEN_KEY, token);
+      } else {
+        await SecureStore.setItemAsync(TOKEN_KEY, token);
+      }
+    } catch {
+      // safe fallback
     }
   },
   get: async (): Promise<string | null> => {
-    if (Platform.OS === 'web') {
-      return localStorage.getItem(TOKEN_KEY);
+    try {
+      if (Platform.OS === 'web') {
+        return localStorage.getItem(TOKEN_KEY);
+      }
+      return await SecureStore.getItemAsync(TOKEN_KEY);
+    } catch {
+      return null;
     }
-    return SecureStore.getItemAsync(TOKEN_KEY);
   },
   delete: async () => {
-    if (Platform.OS === 'web') {
-      localStorage.removeItem(TOKEN_KEY);
-    } else {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.removeItem(TOKEN_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+      }
+    } catch {
+      // safe fallback
     }
   },
 };

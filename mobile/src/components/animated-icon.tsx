@@ -1,162 +1,108 @@
-import { Image } from 'expo-image';
+import { useRef, useState } from 'react';
+import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
-
-const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
-const DURATION = 600;
 
 export function AnimatedSplashOverlay() {
-  const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+  const opacity = useRef(new Animated.Value(1)).current;
 
   if (!visible) return null;
 
-  const splashKeyframe = new Keyframe({
-    0: {
-      transform: [{ scale: 1 }],
-      opacity: 1,
-    },
-    20: {
-      opacity: 1,
-    },
-    70: {
-      opacity: 0,
-      easing: Easing.elastic(0.7),
-    },
-    100: {
-      opacity: 0,
-      transform: [{ scale: 1 }],
-      easing: Easing.elastic(0.7),
-    },
-  });
+  const handleLayout = () => {
+    // Tell native splash screen to hide immediately on first frame
+    SplashScreen.hideAsync().catch(() => {});
 
-  const image = (
-    <Image
-      style={styles.loadingImage}
-      source={require('@/assets/images/loading.png')}
-      contentFit="contain"
-    />
-  );
+    // Fast, smooth fade-out
+    setTimeout(() => {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        setVisible(false);
+      });
+    }, 350);
+  };
 
-  return animate ? (
+  return (
     <Animated.View
-      entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
-        'worklet';
-        if (finished) {
-          scheduleOnRN(setVisible, false);
-        }
-      })}
-      style={styles.splashOverlay}>
-      {image}
+      onLayout={handleLayout}
+      style={[styles.splashOverlay, { opacity }]}
+      pointerEvents="none"
+    >
+      <View style={styles.logoCard}>
+        <Image
+          source={require('@/assets/images/logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+      </View>
+      <Text style={styles.brandTitle}>PixxTechnologiees</Text>
+      <Text style={styles.brandSubtitle}>Bicycle Owner's Declaration</Text>
     </Animated.View>
-  ) : (
-    <View
-      onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
-      }}
-      style={styles.splashOverlay}>
-      {image}
-    </View>
   );
 }
-
-const keyframe = new Keyframe({
-  0: {
-    transform: [{ scale: INITIAL_SCALE_FACTOR }],
-  },
-  100: {
-    transform: [{ scale: 1 }],
-    easing: Easing.elastic(0.7),
-  },
-});
-
-const logoKeyframe = new Keyframe({
-  0: {
-    transform: [{ scale: 1.3 }],
-    opacity: 0,
-  },
-  40: {
-    transform: [{ scale: 1.3 }],
-    opacity: 0,
-    easing: Easing.elastic(0.7),
-  },
-  100: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-    easing: Easing.elastic(0.7),
-  },
-});
-
-const glowKeyframe = new Keyframe({
-  0: {
-    transform: [{ rotateZ: '0deg' }],
-  },
-  100: {
-    transform: [{ rotateZ: '7200deg' }],
-  },
-});
 
 export function AnimatedIcon() {
   return (
     <View style={styles.iconContainer}>
-      <Animated.View entering={glowKeyframe.duration(60 * 1000 * 4)} style={styles.glow}>
-        <Image style={styles.glow} source={require('@/assets/images/logo-glow.png')} />
-      </Animated.View>
-
-      <Animated.View entering={keyframe.duration(DURATION)} style={styles.background} />
-      <Animated.View style={styles.imageContainer} entering={logoKeyframe.duration(DURATION)}>
-        <Image style={styles.logoImage} source={require('@/assets/images/logo.png')} contentFit="contain" />
-      </Animated.View>
+      <View style={styles.logoCard}>
+        <Image
+          source={require('@/assets/images/logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  imageContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  glow: {
-    width: 201,
-    height: 201,
-    position: 'absolute',
-  },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 128,
-    height: 128,
-    zIndex: 100,
-  },
-  loadingImage: {
-    width: 220,
-    height: 220,
-  },
-  logoImage: {
-    width: 80,
-    height: 80,
-  },
-  background: {
-    borderRadius: 40,
-    experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
-    width: 128,
-    height: 128,
-    position: 'absolute',
-  },
   splashOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
+    zIndex: 9999,
+  },
+  logoCard: {
+    width: 100,
+    height: 100,
+    borderRadius: 22,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 16,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+  },
+  brandTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0f172a',
+    letterSpacing: -0.4,
+  },
+  brandSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
