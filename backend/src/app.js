@@ -13,14 +13,17 @@ const app = express();
 app.use(helmet());
 
 // ── CORS ─────────────────────────────────────────────────
-// Allowed origins are read from environment variables.
-// Mobile apps (React Native) do not send an Origin header and are
+// Allowed origins are read from environment variables and known app domains.
+// Mobile apps (React Native) do not send an Origin header and are allowed through.
 const allowedOrigins = [
   process.env.CLIENT_URL,
   process.env.ADMIN_WEB_URL,
+  'https://bicycle-ymym.vercel.app',
   'https://bicycle-uuue.vercel.app',
+  'https://bicycle-flax-chi.vercel.app',
   'http://localhost:5173',
   'http://localhost:8081',
+  'http://localhost:3000',
 ].filter(Boolean);
 
 app.use(
@@ -29,16 +32,24 @@ app.use(
       // Allow requests with no origin (mobile apps, Postman, curl)
       if (!origin) return callback(null, true);
 
-      // In development with no origins configured, allow everything
-      if (allowedOrigins.length === 0) return callback(null, true);
-
+      // Check explicit allowed origins list
       if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Allow any Vercel deployment preview / production domain
+      try {
+        const url = new URL(origin);
+        if (url.hostname.endsWith('.vercel.app') || url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+          return callback(null, true);
+        }
+      } catch {
+        // invalid URL
+      }
 
       callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,
     methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
 
