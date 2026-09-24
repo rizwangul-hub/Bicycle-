@@ -1,14 +1,17 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 import { useEffect } from 'react';
 
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 /**
  * Navigation guard — redirects to login when unauthenticated.
  *
  * Logic:
- *  - Stack is ALWAYS mounted so Expo Go never hangs at 99% waiting for a root view.
+ *  - Stack is ALWAYS mounted so Expo Go never hangs waiting for a root view.
  *  - Once session check finishes (isLoading === false):
  *      • If unauthenticated: redirect to /(auth)/login
  *      • If authenticated:   redirect to / (dashboard)
@@ -53,6 +56,10 @@ function NavigationGuard() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   return (
     <AuthProvider>
