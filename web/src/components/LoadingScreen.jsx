@@ -1,22 +1,23 @@
 import React from 'react';
-import loadingImg from '../assets/image/loading.png';
+import logoImg from '../assets/image/logo.png';
 
 export function LoadingScreen({ message = 'Loading application...' }) {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <div style={styles.imageWrapper}>
+        <div style={styles.logoBadge}>
           <img
-            src={loadingImg}
-            alt="Loading..."
-            style={styles.image}
+            src={logoImg}
+            alt="Pixx Logo"
+            style={styles.logoImage}
           />
         </div>
+        <h3 style={styles.title}>PixxTechnologiees</h3>
+        <p style={styles.subtitle}>Bicycle Management System</p>
         <div style={styles.spinnerWrapper}>
           <div style={styles.spinner} />
         </div>
-        <h3 style={styles.title}>Pixx Bicycle Management</h3>
-        <p style={styles.subtitle}>{message}</p>
+        <p style={styles.messageText}>{message}</p>
       </div>
 
       <style>{`
@@ -53,43 +54,52 @@ const styles = {
     maxWidth: '420px',
     width: '100%',
   },
-  imageWrapper: {
-    width: '180px',
-    height: '180px',
+  logoBadge: {
+    width: '100px',
+    height: '100px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: '24px',
+    backgroundColor: '#ffffff',
+    borderRadius: '24px',
+    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
+    marginBottom: '20px',
     animation: 'pulseGlow 2.4s ease-in-out infinite',
   },
-  image: {
-    maxWidth: '100%',
-    maxHeight: '100%',
+  logoImage: {
+    width: '80px',
+    height: '80px',
     objectFit: 'contain',
-    borderRadius: '16px',
   },
   spinnerWrapper: {
-    marginBottom: '16px',
+    marginTop: '16px',
+    marginBottom: '12px',
   },
   spinner: {
-    width: '32px',
-    height: '32px',
+    width: '28px',
+    height: '28px',
     borderRadius: '50%',
     border: '3px solid rgba(255, 255, 255, 0.15)',
     borderTopColor: '#38bdf8',
     animation: 'spin 0.8s linear infinite',
   },
   title: {
-    margin: '0 0 6px 0',
-    fontSize: '20px',
+    margin: '0 0 4px 0',
+    fontSize: '22px',
     fontWeight: '700',
     color: '#ffffff',
     letterSpacing: '-0.3px',
   },
   subtitle: {
-    margin: 0,
+    margin: '0 0 8px 0',
     fontSize: '14px',
     color: '#94a3b8',
+    fontWeight: '500',
+  },
+  messageText: {
+    margin: 0,
+    fontSize: '13px',
+    color: '#64748b',
   },
 };
 

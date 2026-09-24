@@ -1,32 +1,12 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Slot, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { useEffect } from 'react';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
-/**
- * Navigation guard — redirects to login when unauthenticated.
- *
- * Logic:
- *  - isLoading:     keep splash visible (return null)
- *  - user === null: redirect to /(auth)/login
- *  - user exists:   render the authenticated stack layout
- *
- * The Stack below exposes:
- *  • (auth)               — login group (no header)
- *  • index                — Dashboard tab screen (no header)
- *  • declarations         — Declarations tab screen (no header)
- *  • create-declaration   — push screen with header
- *  • declaration/[id]     — push screen with header
- *
- * The NativeTabs component (in AppTabs) is rendered from inside index.tsx /
- * declarations.tsx via the expo-router file-system nesting, so it shows the
- * bottom tab bar on both tab screens automatically.
- */
 function NavigationGuard() {
   const { user, isLoading } = useAuth();
   const router   = useRouter();
@@ -34,6 +14,9 @@ function NavigationGuard() {
 
   useEffect(() => {
     if (isLoading) return;
+
+    // Immediately dismiss splash screen once session is checked
+    SplashScreen.hideAsync().catch(() => {});
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -44,19 +27,29 @@ function NavigationGuard() {
     }
   }, [user, isLoading, segments]);
 
-  if (isLoading) return null;
-  if (!user)     return <Slot />;
+  if (isLoading) {
+    return (
+      <View style={styles.splashContainer}>
+        <View style={styles.logoBadge}>
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
+        <Text style={styles.brandTitle}>PixxTechnologiees</Text>
+        <Text style={styles.brandSubtitle}>Bicycle Management System</Text>
+        <ActivityIndicator size="small" color="#1a56db" style={{ marginTop: 20 }} />
+      </View>
+    );
+  }
 
-  // Authenticated: Stack manages all app screens.
-  // AppTabs is wired via NativeTabs inside the file system (app/index.tsx,
-  // app/declarations.tsx share the same NativeTabs instance from app-tabs.tsx).
+  if (!user) return <Slot />;
+
   return (
     <Stack>
-      {/* Tab root screens — NativeTabs handles the bottom bar for these */}
       <Stack.Screen name="index"        options={{ headerShown: false }} />
       <Stack.Screen name="declarations" options={{ headerShown: false }} />
-
-      {/* Stack screens pushed over the tabs */}
       <Stack.Screen
         name="create-declaration"
         options={{ title: 'New Declaration', headerBackTitle: 'Back' }}
@@ -79,9 +72,50 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
         <NavigationGuard />
       </ThemeProvider>
     </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  splashContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  logoBadge: {
+    width: 90,
+    height: 90,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 16,
+  },
+  logoImage: {
+    width: 72,
+    height: 72,
+  },
+  brandTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0f172a',
+    letterSpacing: -0.4,
+  },
+  brandSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+});

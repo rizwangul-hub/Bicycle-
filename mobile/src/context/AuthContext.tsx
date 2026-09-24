@@ -83,23 +83,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Restore session on app launch ─────────────────────
   useEffect(() => {
+    let isMounted = true;
     const restore = async () => {
       try {
         const stored = await storage.get();
-        if (!stored) return;
+        if (!stored) {
+          if (isMounted) setIsLoading(false);
+          return;
+        }
 
-        // Validate token by calling /api/auth/me
-        const me = await authService.getMe(stored);
-        setToken(stored);
-        setUser(me);
+        // Validate token with a 2.5-second timeout so the app never hangs on startup
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth check timeout')), 2500)
+        );
+
+        const me = (await Promise.race([
+          authService.getMe(stored),
+          timeoutPromise,
+        ])) as AuthUser;
+
+        if (isMounted) {
+          setToken(stored);
+          setUser(me);
+        }
       } catch {
-        // Token invalid or expired — clear storage
+        // Token invalid, expired, or server offline — clear storage
         await storage.delete();
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     restore();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // ── Login ─────────────────────────────────────────────
