@@ -89,6 +89,8 @@ export const declarationService = {
   },
 
   getCertificateUrl: (id) => {
-    return `${API_BASE_URL}${ENDPOINTS.DECLARATIONS.CERTIFICATE(id)}`;
+    const token = authService.getToken();
+    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+    return `${API_BASE_URL}${ENDPOINTS.DECLARATIONS.CERTIFICATE(id)}${tokenParam}`;
   },
 };

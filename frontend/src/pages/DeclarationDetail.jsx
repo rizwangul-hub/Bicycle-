@@ -64,7 +64,10 @@ export const DeclarationDetail = () => {
 
   const handlePrintCertificate = () => {
     const certUrl = declarationService.getCertificateUrl(id);
-    window.open(certUrl, '_blank');
+    const win = window.open(certUrl, '_blank');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+      window.location.href = certUrl;
+    }
   };
 
   if (loading) {
@@ -125,7 +128,7 @@ export const DeclarationDetail = () => {
         </div>
       </div>
 
-      {/* ── Action Toolbar (Certificate / Print) ──────── */}
+      {/* ── Action Toolbar (Certificate / Print / PDF) ── */}
       <div style={styles.actionToolbar}>
         <button
           type="button"
@@ -133,8 +136,11 @@ export const DeclarationDetail = () => {
           onClick={handlePrintCertificate}
         >
           <span>📄</span>
-          <span>Print / View Official Certificate</span>
+          <span>Print / Save PDF Certificate</span>
         </button>
+        <p style={styles.certHint}>
+          Generates official printable certificate with customer details, photos, and signatures.
+        </p>
       </div>
 
       {/* ── Section 1: Customer Details ──────────────── */}
@@ -507,6 +513,13 @@ const styles = {
     cursor: 'pointer',
     boxShadow: '0 2px 6px rgba(15, 23, 42, 0.2)',
     touchAction: 'manipulation',
+  },
+  certHint: {
+    margin: '6px 0 0 0',
+    fontSize: '11px',
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: '1.4',
   },
   detailCard: {
     backgroundColor: '#ffffff',

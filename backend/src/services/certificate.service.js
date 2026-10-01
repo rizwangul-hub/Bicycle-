@@ -338,34 +338,77 @@ function generateCertificateHtml(declaration, attachments = []) {
       }
     }
     .print-actions {
-      text-align: center;
-      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      max-width: 820px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .btn-print {
       background: #1e3a8a;
       color: #ffffff;
       border: none;
-      padding: 10px 22px;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 6px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 8px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.3);
+      touch-action: manipulation;
     }
     .btn-print:hover {
       background: #1d4ed8;
+    }
+    .btn-close {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .print-hint {
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.4;
     }
   </style>
 </head>
 <body>
 
   <div class="print-actions no-print">
-    <button class="btn-print" onclick="window.print()">
-      🖨️ Print / Save as PDF
-    </button>
+    <div class="btn-group">
+      <button class="btn-print" onclick="window.print()">
+        🖨️ Print / Save as PDF
+      </button>
+      <button class="btn-close" onclick="window.close(); if(window.history.length > 1) window.history.back();">
+        ✕ Close
+      </button>
+    </div>
+    <div class="print-hint">
+      📄 <strong>Tip:</strong> In the print preview window, choose <strong>"Save as PDF"</strong> to download a PDF copy. On iPhone, tap Share (⬆️) &rarr; Print.
+    </div>
   </div>
 
   <div class="cert-container">
@@ -488,6 +531,18 @@ function generateCertificateHtml(declaration, attachments = []) {
     </div>
   </div>
 
+  <script>
+    // Automatically trigger browser / mobile print dialog after styles and images render
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        try {
+          window.print();
+        } catch(e) {
+          console.warn('Auto-print dialog notice:', e);
+        }
+      }, 500);
+    });
+  </script>
 </body>
 </html>`;
 }
