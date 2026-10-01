@@ -1,13 +1,13 @@
 /**
- * Certificate Generator Service
+ * Certificate Generator Service — Executive UK Registry Edition
  * Pixx Bicycle Owner's Declaration System
  *
  * Generates an official, beautifully-formatted UK commercial registry certificate
- * for bicycle declarations, ready for print, PDF export, and digital record-keeping.
+ * for bicycle declarations, ready for mobile viewing, print, and PDF export.
  */
 
 function escapeHtml(str) {
-  if (!str) return '';
+  if (!str && str !== 0) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -37,7 +37,7 @@ function formatDate(iso) {
 function generateCertificateHtml(declaration, attachments = []) {
   const refCode = declaration._id ? declaration._id.toString().slice(-8).toUpperCase() : 'UNKNOWN';
   const shopName = declaration.shopId?.name || declaration.shopId?.shopCode || 'Authorized Bicycle Shop';
-  const shopLocation = declaration.shopId?.location || 'United Kingdom';
+  const shopLocation = declaration.shopId?.location || declaration.shopId?.address || 'United Kingdom';
   const staffName = declaration.createdBy?.name || 'Authorized Staff';
   const dateStr = formatDate(declaration.date || declaration.createdAt);
 
@@ -46,18 +46,26 @@ function generateCertificateHtml(declaration, attachments = []) {
   const idAttachments = attachments.filter((a) => a.category === 'ID');
   const additionalAttachments = attachments.filter((a) => a.category === 'ADDITIONAL');
 
-  const renderPhotoGrid = (items, label) => {
+  const renderPhotoGrid = (items, label, icon) => {
     if (!items || items.length === 0) return '';
     return `
-      <div class="photo-category">
-        <div class="photo-cat-title">${label} (${items.length})</div>
+      <div class="photo-category-block">
+        <div class="photo-category-header">
+          <span class="photo-cat-icon">${icon}</span>
+          <span class="photo-cat-title">${escapeHtml(label)}</span>
+          <span class="photo-cat-badge">${items.length} ${items.length === 1 ? 'file' : 'files'}</span>
+        </div>
         <div class="photo-grid">
           ${items
             .map(
               (item) => `
             <div class="photo-card">
-              <img src="${escapeHtml(item.storageUrl)}" alt="${escapeHtml(item.originalFileName || label)}" />
-              <div class="photo-meta">${escapeHtml(item.originalFileName || 'Evidence File')}</div>
+              <div class="photo-img-wrapper">
+                <img src="${escapeHtml(item.storageUrl)}" alt="${escapeHtml(item.originalFileName || label)}" loading="lazy" />
+              </div>
+              <div class="photo-meta">
+                <span class="photo-name">${escapeHtml(item.originalFileName || label)}</span>
+              </div>
             </div>
           `
             )
@@ -71,14 +79,14 @@ function generateCertificateHtml(declaration, attachments = []) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bicycle Owner Declaration Certificate — #${refCode}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Declaration Certificate #${refCode} — ${escapeHtml(declaration.customerName || 'Customer')}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     @page {
       size: A4 portrait;
-      margin: 12mm 15mm;
+      margin: 10mm 12mm;
     }
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -86,461 +94,680 @@ function generateCertificateHtml(declaration, attachments = []) {
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #0f172a;
-      background: #f8fafc;
-      padding: 20px;
+      background: #f1f5f9;
+      padding: 16px 10px 40px 10px;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
     }
+
+    /* ── Floating Action Toolbar (Hidden in Print) ── */
+    .toolbar-container {
+      max-width: 820px;
+      margin: 0 auto 16px auto;
+    }
+    .print-toolbar {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .btn-action-print {
+      flex: 2;
+      height: 46px;
+      background: #1a56db;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(26, 86, 219, 0.3);
+      touch-action: manipulation;
+    }
+    .btn-action-close {
+      flex: 1;
+      height: 46px;
+      background: #f8fafc;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+    .toolbar-guide {
+      font-size: 12px;
+      color: #475569;
+      text-align: center;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 8px 12px;
+      width: 100%;
+      box-sizing: border-box;
+      line-height: 1.4;
+    }
+
+    /* ── Main Certificate Container ── */
     .cert-container {
       max-width: 820px;
       margin: 0 auto;
       background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 32px 36px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
     }
+    .cert-top-stripe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #1e3a8a 0%, #1a56db 50%, #0d9488 100%);
+    }
+
+    /* ── Certificate Header ── */
     .cert-header {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 2px solid #1e3a8a;
+      flex-direction: column;
+      gap: 14px;
+      border-bottom: 2px solid #e2e8f0;
       padding-bottom: 18px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 600px) {
+      .cert-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
     }
     .brand-block h1 {
       font-size: 20px;
       font-weight: 800;
-      color: #1e3a8a;
-      letter-spacing: -0.5px;
+      color: #0f172a;
+      letter-spacing: -0.3px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .brand-block p {
-      font-size: 11px;
+      font-size: 11.5px;
       color: #64748b;
-      margin-top: 2px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+      margin-top: 3px;
     }
-    .cert-meta {
-      text-align: right;
+    .cert-meta-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start;
     }
-    .ref-badge {
-      display: inline-block;
+    @media (min-width: 600px) {
+      .cert-meta-block {
+        align-items: flex-end;
+      }
+    }
+    .cert-ref-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       background: #eff6ff;
-      color: #1d4ed8;
       border: 1px solid #bfdbfe;
-      font-weight: 700;
+      color: #1e40af;
+      font-weight: 800;
       font-size: 13px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-family: "Courier New", Courier, monospace;
-      letter-spacing: 0.5px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-    .cert-date {
+    .cert-timestamp {
       font-size: 11px;
       color: #64748b;
-      margin-top: 6px;
+      font-weight: 500;
     }
-    .badge-status {
-      display: inline-block;
-      background: #dcfce7;
-      color: #15803d;
-      font-size: 10px;
+    .cert-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      font-size: 10.5px;
       font-weight: 700;
       padding: 2px 8px;
-      border-radius: 4px;
-      margin-top: 4px;
+      border-radius: 6px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
+
+    /* ── Frame Number High-Impact Security Card ── */
+    .frame-security-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+      border: 2px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .frame-sec-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #1e40af;
       text-transform: uppercase;
-      letter-spacing: 0.75px;
-      color: #1e3a8a;
-      margin-bottom: 10px;
+      letter-spacing: 0.8px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .card-grid {
+    .frame-sec-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: 1.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      word-break: break-all;
+    }
+    .frame-sec-sub {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Content Grid (Mobile 1-col, Desktop 2-col) ── */
+    .content-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 16px;
       margin-bottom: 20px;
     }
-    .detail-card {
+    @media (min-width: 640px) {
+      .content-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+    }
+    .section-card {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 14px 16px;
-    }
-    .detail-row {
+      border-radius: 14px;
+      padding: 16px;
       display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      border-bottom: 1px dotted #e2e8f0;
-      font-size: 12px;
+      flex-direction: column;
+      gap: 12px;
     }
-    .detail-row:last-child {
+    .card-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e3a8a;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .field-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 6px;
+    }
+    .field-pair:last-child {
       border-bottom: none;
+      padding-bottom: 0;
     }
-    .label {
-      color: #64748b;
-      font-weight: 500;
-    }
-    .val {
-      font-weight: 600;
-      color: #0f172a;
-      text-align: right;
-    }
-    .highlight-frame {
-      background: #fef3c7;
-      color: #92400e;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: "Courier New", Courier, monospace;
+    .field-label {
+      font-size: 10.5px;
       font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .declaration-statement {
+    .field-val {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-word;
+    }
+    .price-val {
+      color: #b45309;
+      font-size: 15px;
+    }
+
+    /* ── Legal Declaration Statement ── */
+    .legal-card {
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
-      border-left: 4px solid #16a34a;
-      border-radius: 6px;
+      border-left: 5px solid #16a34a;
+      border-radius: 12px;
       padding: 14px 16px;
       margin-bottom: 20px;
     }
-    .declaration-statement h4 {
+    .legal-card h4 {
       color: #15803d;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
       margin-bottom: 6px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .declaration-statement p {
+    .legal-card p {
       font-size: 11.5px;
       color: #166534;
       line-height: 1.5;
     }
-    .legal-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 8px;
-      background: #16a34a;
-      color: #ffffff;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 10.5px;
-      font-weight: 700;
-    }
+
+    /* ── Photo Evidence Gallery ── */
     .photo-section {
-      margin-top: 16px;
+      margin-top: 10px;
       margin-bottom: 24px;
       page-break-inside: avoid;
     }
-    .photo-category {
-      margin-bottom: 12px;
+    .photo-section-main-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .photo-category-block {
+      margin-bottom: 16px;
+    }
+    .photo-category-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
     }
     .photo-cat-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      color: #475569;
+      color: #334155;
       text-transform: uppercase;
-      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .photo-cat-badge {
+      font-size: 10px;
+      background: #e2e8f0;
+      color: #475569;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 600;
     }
     .photo-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 10px;
+    }
+    @media (min-width: 600px) {
+      .photo-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
     }
     .photo-card {
       border: 1px solid #e2e8f0;
-      border-radius: 4px;
+      border-radius: 10px;
       overflow: hidden;
-      background: #f8fafc;
-      text-align: center;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
-    .photo-card img {
+    .photo-img-wrapper {
       width: 100%;
-      height: 90px;
+      height: 130px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    @media (min-width: 600px) {
+      .photo-img-wrapper {
+        height: 110px;
+      }
+    }
+    .photo-img-wrapper img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       display: block;
-      background: #e2e8f0;
     }
     .photo-meta {
-      font-size: 9.5px;
-      color: #64748b;
-      padding: 4px 6px;
+      padding: 6px 8px;
+      background: #f8fafc;
+      border-top: 1px solid #f1f5f9;
+    }
+    .photo-name {
+      font-size: 10px;
+      color: #475569;
+      display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-weight: 600;
     }
+
+    /* ── Signatures & Attestation ── */
     .signatures-block {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-top: 24px;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 20px;
       padding-top: 18px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 2px solid #e2e8f0;
       page-break-inside: avoid;
     }
-    .sig-card {
-      border: 1px dashed #cbd5e1;
-      border-radius: 6px;
-      padding: 12px 16px;
+    @media (min-width: 600px) {
+      .signatures-block {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+    }
+    .sig-box {
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 14px;
       background: #fafafa;
     }
-    .sig-card .sig-title {
-      font-size: 10px;
+    .sig-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #475569;
       text-transform: uppercase;
-      color: #64748b;
-      font-weight: 700;
-      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
     }
     .sig-line {
-      border-bottom: 1px solid #94a3b8;
-      height: 24px;
-      margin-bottom: 6px;
+      border-bottom: 1.5px solid #0f172a;
+      height: 1px;
+      margin-bottom: 8px;
     }
     .sig-name {
-      font-size: 11px;
-      font-weight: 600;
-      color: #1e293b;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0f172a;
     }
-    .footer-note {
+    .sig-role {
+      font-size: 10.5px;
+      color: #64748b;
+    }
+
+    /* ── Footer ── */
+    .cert-footer {
       text-align: center;
       margin-top: 24px;
-      font-size: 9.5px;
-      color: #94a3b8;
+      padding-top: 14px;
       border-top: 1px solid #f1f5f9;
-      padding-top: 12px;
-      letter-spacing: 0.3px;
+      font-size: 10.5px;
+      color: #94a3b8;
+      line-height: 1.4;
     }
+
+    /* ── PRINT MEDIA QUERIES (A4 / PDF Export) ── */
     @media print {
       body {
-        background: #ffffff;
-        padding: 0;
-      }
-      .cert-container {
-        border: none;
-        box-shadow: none;
-        padding: 0;
-        max-width: 100%;
+        background: #ffffff !important;
+        padding: 0 !important;
       }
       .no-print {
         display: none !important;
       }
-    }
-    .print-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 24px;
-      padding: 16px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      max-width: 820px;
-      margin-left: auto;
-      margin-right: auto;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    }
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .btn-print {
-      background: #1e3a8a;
-      color: #ffffff;
-      border: none;
-      padding: 12px 24px;
-      font-size: 15px;
-      font-weight: 700;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.3);
-      touch-action: manipulation;
-    }
-    .btn-print:hover {
-      background: #1d4ed8;
-    }
-    .btn-close {
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #cbd5e1;
-      padding: 12px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-    .print-hint {
-      font-size: 12px;
-      color: #64748b;
-      text-align: center;
-      line-height: 1.4;
+      .cert-container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .cert-top-stripe {
+        display: none !important;
+      }
+      .content-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+      }
+      .photo-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+      }
+      .photo-img-wrapper {
+        height: 90px !important;
+      }
+      .signatures-block {
+        grid-template-columns: 1fr 1fr !important;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="print-actions no-print">
-    <div class="btn-group">
-      <button class="btn-print" onclick="window.print()">
-        🖨️ Print / Save as PDF
-      </button>
-      <button class="btn-close" onclick="window.close(); if(window.history.length > 1) window.history.back();">
-        ✕ Close
-      </button>
-    </div>
-    <div class="print-hint">
-      📄 <strong>Tip:</strong> In the print preview window, choose <strong>"Save as PDF"</strong> to download a PDF copy. On iPhone, tap Share (⬆️) &rarr; Print.
+  <!-- Floating Action Bar for Mobile & Desktop (Hidden on Print) -->
+  <div class="toolbar-container no-print">
+    <div class="print-toolbar">
+      <div class="btn-row">
+        <button class="btn-action-print" onclick="window.print()">
+          <span>🖨️</span>
+          <span>Print / Save as PDF</span>
+        </button>
+        <button class="btn-action-close" onclick="window.close(); if(window.history.length > 1) window.history.back();">
+          <span>✕ Close</span>
+        </button>
+      </div>
+      <div class="toolbar-guide">
+        💡 <strong>iPhone / Mobile Tip:</strong> Tap <em>Print / Save as PDF</em> &rarr; on the print preview, pinch open with two fingers or tap Share (⬆️) &rarr; select <strong>"Save to Files"</strong> to save this customer's PDF.
+      </div>
     </div>
   </div>
 
+  <!-- Official Certificate Document -->
   <div class="cert-container">
+    <div class="cert-top-stripe"></div>
+
     <!-- Header -->
     <div class="cert-header">
       <div class="brand-block">
         <h1>🚲 PixxTechnologiees</h1>
-        <p>Official Bicycle Owner Declaration Certificate • UK</p>
+        <p>Bicycle Owner Declaration Certificate • Commercial Registry</p>
       </div>
-      <div class="cert-meta">
-        <div class="ref-badge">DEC-${escapeHtml(refCode)}</div>
-        <div class="cert-date">Issued: ${escapeHtml(dateStr)}</div>
-        <div class="badge-status">✓ Authenticated Record</div>
-      </div>
-    </div>
-
-    <!-- Cards Grid -->
-    <div class="card-grid">
-      <!-- Customer Information -->
-      <div class="detail-card">
-        <div class="section-title">👤 Declarant / Customer Information</div>
-        <div class="detail-row">
-          <span class="label">Full Legal Name</span>
-          <span class="val">${escapeHtml(declaration.customerName || 'N/A')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Contact Telephone</span>
-          <span class="val">${escapeHtml(declaration.phone || 'Not Provided')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Email Address</span>
-          <span class="val">${escapeHtml(declaration.email || 'Not Provided')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Residential Address</span>
-          <span class="val">${escapeHtml(declaration.address || 'Not Provided')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Issuing Shop</span>
-          <span class="val">${escapeHtml(shopName)} (${escapeHtml(shopLocation)})</span>
-        </div>
-      </div>
-
-      <!-- Bicycle Information -->
-      <div class="detail-card">
-        <div class="section-title">🚲 Bicycle Specifications</div>
-        <div class="detail-row">
-          <span class="label">Bicycle Model</span>
-          <span class="val">${escapeHtml(declaration.bicycleModel || 'N/A')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Bicycle Make</span>
-          <span class="val">${escapeHtml(declaration.bicycleMake || 'Unspecified')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Frame / Serial No.</span>
-          <span class="val ${declaration.frameNumber ? 'highlight-frame' : ''}">
-            ${escapeHtml(declaration.frameNumber || 'NO SERIAL RECORDED')}
-          </span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Colour</span>
-          <span class="val">${escapeHtml(declaration.bicycleColour || 'Unspecified')}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">Source / Acquisition</span>
-          <span class="val">${escapeHtml(declaration.bicycleSource || 'Customer Owned')}</span>
-        </div>
+      <div class="cert-meta-block">
+        <div class="cert-ref-pill">DEC-${escapeHtml(refCode)}</div>
+        <div class="cert-timestamp">Date: ${escapeHtml(dateStr)}</div>
+        <div class="cert-status-badge">✓ Authenticated Record</div>
       </div>
     </div>
 
-    <!-- Statutory Ownership Declaration -->
-    <div class="declaration-statement">
-      <h4>⚖️ Statutory Ownership Declaration</h4>
+    <!-- High-Impact Frame / Serial Number Badge -->
+    <div class="frame-security-card">
+      <div class="frame-sec-label">
+        <span>🔒</span>
+        <span>Registered Bicycle Frame / Serial Number</span>
+      </div>
+      <div class="frame-sec-value">${escapeHtml(declaration.frameNumber || 'NO FRAME NUMBER RECORDED')}</div>
+      <div class="frame-sec-sub">
+        <span>🛡️</span>
+        <span>Anti-theft identification recorded across PixxTechnologiees network stores & retrieval database.</span>
+      </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="content-grid">
+      <!-- Customer Information Block -->
+      <div class="section-card">
+        <div class="card-title">
+          <span>👤</span>
+          <span>Declarant / Customer Information</span>
+        </div>
+        <div class="field-pair">
+          <span class="field-label">Full Legal Name</span>
+          <span class="field-val">${escapeHtml(declaration.customerName || 'N/A')}</span>
+        </div>
+        <div class="field-pair">
+          <span class="field-label">Telephone Number</span>
+          <span class="field-val">${escapeHtml(declaration.phone || declaration.mobile || 'Not Provided')}</span>
+        </div>
+        ${
+          declaration.email
+            ? `
+        <div class="field-pair">
+          <span class="field-label">Email Address</span>
+          <span class="field-val">${escapeHtml(declaration.email)}</span>
+        </div>
+        `
+            : ''
+        }
+        <div class="field-pair">
+          <span class="field-label">Residential Address</span>
+          <span class="field-val">${escapeHtml(declaration.address || 'Not Provided')}${
+            declaration.postcode ? ` (${escapeHtml(declaration.postcode)})` : ''
+          }</span>
+        </div>
+        <div class="field-pair">
+          <span class="field-label">Issuing Store Branch</span>
+          <span class="field-val">${escapeHtml(shopName)} — ${escapeHtml(shopLocation)}</span>
+        </div>
+      </div>
+
+      <!-- Bicycle Specifications Block -->
+      <div class="section-card">
+        <div class="card-title">
+          <span>🚲</span>
+          <span>Bicycle Specifications</span>
+        </div>
+        <div class="field-pair">
+          <span class="field-label">Bicycle Model</span>
+          <span class="field-val">${escapeHtml(declaration.bicycleModel || 'N/A')}</span>
+        </div>
+        <div class="field-pair">
+          <span class="field-label">Manufacturer / Make</span>
+          <span class="field-val">${escapeHtml(declaration.bicycleMake || 'Not Specified')}</span>
+        </div>
+        ${
+          declaration.cyclePrice
+            ? `
+        <div class="field-pair">
+          <span class="field-label">Declared Valuation / Price</span>
+          <span class="field-val price-val">£${escapeHtml(declaration.cyclePrice)}</span>
+        </div>
+        `
+            : ''
+        }
+        <div class="field-pair">
+          <span class="field-label">Bicycle Colour</span>
+          <span class="field-val">${escapeHtml(declaration.bicycleColour || 'Not Specified')}</span>
+        </div>
+        ${
+          declaration.ownershipDuration
+            ? `
+        <div class="field-pair">
+          <span class="field-label">Ownership Duration</span>
+          <span class="field-val">${escapeHtml(declaration.ownershipDuration)}</span>
+        </div>
+        `
+            : ''
+        }
+        ${
+          declaration.bicycleSource
+            ? `
+        <div class="field-pair">
+          <span class="field-label">Acquisition Source</span>
+          <span class="field-val">${escapeHtml(declaration.bicycleSource)}</span>
+        </div>
+        `
+            : ''
+        }
+      </div>
+    </div>
+
+    <!-- Official Legal Declaration -->
+    <div class="legal-card">
+      <h4>🛡️ Proof of Ownership Attestation</h4>
       <p>
-        "I hereby solemnly declare and affirm that I am the legal and lawful owner of the bicycle described in this document. 
-        I confirm that the bicycle is not stolen, encumbered by hire purchase or dispute, and that all information provided to the bicycle shop 
-        is accurate and truthful under the provisions of the UK Theft Act and commercial declaration regulations."
+        I, the undersigned declarant, hereby confirm that I am the legal owner of the bicycle described in this document, that it was lawfully acquired, and that it is not subject to any theft report, lien, or encumbrance. I authorize PixxTechnologiees to retain this photographic and documentary record in its central registry for anti-theft identification and law enforcement verification.
       </p>
-      <div class="legal-badge">
-        ✓ Legal Ownership Confirmed: ${declaration.isLegalOwner ? 'YES (Affirmed)' : 'Pending'}
-      </div>
     </div>
 
-    <!-- Photographic Evidence -->
+    <!-- Photographic Evidence Gallery -->
     ${
       attachments.length > 0
         ? `
       <div class="photo-section">
-        <div class="section-title">📷 Attached Photographic Evidence (${attachments.length} files)</div>
-        ${renderPhotoGrid(bicycleAttachments, 'Bicycle Photos')}
-        ${renderPhotoGrid(customerAttachments, 'Customer Photos')}
-        ${renderPhotoGrid(idAttachments, 'Identity Verification Photos')}
-        ${renderPhotoGrid(additionalAttachments, 'Receipts & Additional Documentation')}
+        <div class="photo-section-main-title">
+          <span>📸</span>
+          <span>Attached Photographic Evidence (${attachments.length} Verified Files)</span>
+        </div>
+        ${renderPhotoGrid(bicycleAttachments, 'Bicycle Evidence Photos', '🚴')}
+        ${renderPhotoGrid(customerAttachments, 'Customer Portrait Verification', '👤')}
+        ${renderPhotoGrid(idAttachments, 'Government Photo ID / Passport', '🪪')}
+        ${renderPhotoGrid(additionalAttachments, 'Proof of Purchase / Additional Invoices', '📄')}
       </div>
     `
         : ''
     }
 
-    <!-- Attestation & Signatures -->
+    <!-- Signatures & Verification Block -->
     <div class="signatures-block">
-      <div class="sig-card">
-        <div class="sig-title">Declarant Signature</div>
+      <div class="sig-box">
+        <div class="sig-title">Declarant / Customer Signature</div>
         <div class="sig-line"></div>
         <div class="sig-name">${escapeHtml(declaration.customerName || 'Customer Signature')}</div>
-        <div class="label" style="font-size: 10px;">Date: ${escapeHtml(dateStr.split(',')[0])}</div>
+        <div class="sig-role">Date of Declaration: ${escapeHtml(dateStr.split(',')[0])}</div>
       </div>
-      <div class="sig-card">
-        <div class="sig-title">Shop Attestation & Verification</div>
+      <div class="sig-box">
+        <div class="sig-title">Store Verification & Attestation</div>
         <div class="sig-line"></div>
         <div class="sig-name">Verified by: ${escapeHtml(staffName)}</div>
-        <div class="label" style="font-size: 10px;">Shop: ${escapeHtml(shopName)}</div>
+        <div class="sig-role">Authorized Branch: ${escapeHtml(shopName)}</div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="footer-note">
-      This document constitutes an official business record generated by the PixxTechnologiees Bicycle Owner Declaration System.
-      Record ID: ${escapeHtml(declaration._id?.toString() || 'N/A')} • System Authenticated
+    <!-- Footer Note -->
+    <div class="cert-footer">
+      Official Commercial Record generated by PixxTechnologiees UK Bicycle Owner Registry System.<br>
+      System Audit ID: ${escapeHtml(declaration._id?.toString() || 'N/A')} • Issued under UK Commercial Records Regulations.
     </div>
   </div>
 
   <script>
-    // Automatically trigger browser / mobile print dialog after styles and images render
+    // Auto-launch native print/save dialog on load
     window.addEventListener('load', function() {
       setTimeout(function() {
         try {
           window.print();
-        } catch(e) {
-          console.warn('Auto-print dialog notice:', e);
+        } catch (e) {
+          console.warn('Auto print trigger notice:', e);
         }
-      }, 500);
+      }, 600);
     });
   </script>
 </body>
