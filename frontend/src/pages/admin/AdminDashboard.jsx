@@ -55,18 +55,18 @@ export const AdminDashboard = () => {
       ) : (
         <>
           {/* ── High-Level Network Metrics ────────────── */}
-          <div style={styles.metricsGrid}>
+          <div className="admin-metrics-grid">
             <div style={styles.metricCard}>
               <span style={styles.metricValue}>{stats?.totalDeclarations ?? 0}</span>
-              <span style={styles.metricLabel}>Total Declarations</span>
+              <span style={styles.metricLabel}>Declarations</span>
             </div>
             <div style={styles.metricCard}>
               <span style={styles.metricValue}>{stats?.shops?.length ?? 6}</span>
-              <span style={styles.metricLabel}>Active Shops</span>
+              <span style={styles.metricLabel}>Shops</span>
             </div>
             <div style={styles.metricCard}>
               <span style={styles.metricValue}>{stats?.userCount ?? 0}</span>
-              <span style={styles.metricLabel}>Staff Users</span>
+              <span style={styles.metricLabel}>Staff</span>
             </div>
             <div style={styles.metricCard}>
               <span style={styles.metricValue}>{stats?.recentCount ?? 0}</span>
@@ -82,7 +82,7 @@ export const AdminDashboard = () => {
             >
               <div style={styles.quickNavLeft}>
                 <span style={styles.quickNavIcon}>📋</span>
-                <div>
+                <div style={styles.quickNavTextWrapper}>
                   <h4 style={styles.quickNavTitle}>All Declarations</h4>
                   <p style={styles.quickNavSub}>Browse & filter by shop</p>
                 </div>
@@ -96,9 +96,9 @@ export const AdminDashboard = () => {
             >
               <div style={styles.quickNavLeft}>
                 <span style={styles.quickNavIcon}>🏪</span>
-                <div>
+                <div style={styles.quickNavTextWrapper}>
                   <h4 style={styles.quickNavTitle}>Bicycle Shop Network</h4>
-                  <p style={styles.quickNavSub}>View the 6 registered shop locations</p>
+                  <p style={styles.quickNavSub}>View 6 registered locations</p>
                 </div>
               </div>
               <span style={styles.arrow}>›</span>
@@ -110,9 +110,9 @@ export const AdminDashboard = () => {
             >
               <div style={styles.quickNavLeft}>
                 <span style={styles.quickNavIcon}>👥</span>
-                <div>
+                <div style={styles.quickNavTextWrapper}>
                   <h4 style={styles.quickNavTitle}>Staff Accounts</h4>
-                  <p style={styles.quickNavSub}>Manage shop staff logins & roles</p>
+                  <p style={styles.quickNavSub}>Manage staff logins & roles</p>
                 </div>
               </div>
               <span style={styles.arrow}>›</span>
@@ -122,21 +122,27 @@ export const AdminDashboard = () => {
           {/* ── Per-Shop Declaration Breakdown ───────── */}
           <div style={styles.shopSection}>
             <h3 style={styles.shopSectionTitle}>Declarations by Shop</h3>
-            <div style={styles.shopGrid}>
+            <div className="admin-shop-grid">
               {stats?.shops?.map((shop) => (
                 <div
                   key={shop._id}
                   style={styles.shopItem}
                   onClick={() => navigate(`/admin/declarations?shopId=${shop._id}`)}
                 >
-                  <div style={styles.shopItemTop}>
+                  <div style={styles.shopItemLeft}>
                     <span style={styles.shopItemCode}>{shop.code}</span>
-                    <span style={styles.shopItemCount}>
-                      {shop.declarationCount || 0} Records
-                    </span>
+                    <div style={styles.shopItemInfo}>
+                      <h4 style={styles.shopItemName}>{shop.name}</h4>
+                      <span style={styles.shopItemSub}>View declarations</span>
+                    </div>
                   </div>
-                  <h4 style={styles.shopItemName}>{shop.name}</h4>
-                  <span style={styles.shopItemLink}>View Records ›</span>
+                  <div style={styles.shopItemRight}>
+                    <div style={styles.shopItemCountBadge}>
+                      <span style={styles.shopItemCountNum}>{shop.declarationCount || 0}</span>
+                      <span style={styles.shopItemCountLabel}>records</span>
+                    </div>
+                    <span style={styles.arrow}>›</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -228,24 +234,30 @@ const styles = {
   metricCard: {
     backgroundColor: '#ffffff',
     borderRadius: '16px',
-    padding: '16px',
+    padding: '14px 8px',
     border: '1px solid #e2e8f0',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     textAlign: 'center',
     boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+    minWidth: 0,
   },
   metricValue: {
-    fontSize: '24px',
+    fontSize: '22px',
     fontWeight: '800',
     color: '#1a56db',
+    lineHeight: '1.2',
   },
   metricLabel: {
     fontSize: '11px',
     color: '#64748b',
     fontWeight: '600',
     marginTop: '4px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '100%',
   },
   quickNavList: {
     display: 'flex',
@@ -256,7 +268,7 @@ const styles = {
   quickNavCard: {
     backgroundColor: '#ffffff',
     borderRadius: '16px',
-    padding: '16px',
+    padding: '14px 16px',
     border: '1px solid #e2e8f0',
     display: 'flex',
     alignItems: 'center',
@@ -264,29 +276,44 @@ const styles = {
     cursor: 'pointer',
     touchAction: 'manipulation',
     boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+    gap: '12px',
   },
   quickNavLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '14px',
+    gap: '12px',
+    flex: 1,
+    minWidth: 0,
+  },
+  quickNavTextWrapper: {
+    flex: 1,
+    minWidth: 0,
   },
   quickNavIcon: {
     fontSize: '24px',
+    flexShrink: 0,
   },
   quickNavTitle: {
     margin: 0,
-    fontSize: '15px',
+    fontSize: '14.5px',
     fontWeight: '700',
     color: '#0f172a',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   quickNavSub: {
     margin: '2px 0 0 0',
-    fontSize: '12px',
+    fontSize: '11.5px',
     color: '#64748b',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   arrow: {
     fontSize: '20px',
     color: '#94a3b8',
+    flexShrink: 0,
   },
   shopSection: {
     marginTop: '8px',
@@ -297,26 +324,24 @@ const styles = {
     color: '#0f172a',
     marginBottom: '12px',
   },
-  shopGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '12px',
-  },
   shopItem: {
     backgroundColor: '#ffffff',
     borderRadius: '16px',
-    padding: '14px',
+    padding: '12px 14px',
     border: '1px solid #e2e8f0',
     cursor: 'pointer',
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-  },
-  shopItemTop: {
-    display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: '8px',
+    gap: '10px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+  },
+  shopItemLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    flex: 1,
+    minWidth: 0,
   },
   shopItemCode: {
     backgroundColor: '#eff6ff',
@@ -324,22 +349,49 @@ const styles = {
     fontSize: '10px',
     fontWeight: '800',
     borderRadius: '6px',
-    padding: '2px 6px',
+    padding: '3px 6px',
+    flexShrink: 0,
   },
-  shopItemCount: {
-    fontSize: '11px',
-    color: '#16a34a',
-    fontWeight: '700',
+  shopItemInfo: {
+    flex: 1,
+    minWidth: 0,
   },
   shopItemName: {
-    margin: '0 0 10px 0',
+    margin: 0,
     fontSize: '14px',
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  shopItemLink: {
-    fontSize: '11px',
-    color: '#1a56db',
     fontWeight: '700',
+    color: '#0f172a',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  shopItemSub: {
+    fontSize: '11px',
+    color: '#64748b',
+  },
+  shopItemRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexShrink: 0,
+  },
+  shopItemCountBadge: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '3px',
+    backgroundColor: '#f8fafc',
+    padding: '3px 8px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+  },
+  shopItemCountNum: {
+    fontSize: '13px',
+    fontWeight: '800',
+    color: '#16a34a',
+  },
+  shopItemCountLabel: {
+    fontSize: '10.5px',
+    color: '#64748b',
+    fontWeight: '600',
   },
 };

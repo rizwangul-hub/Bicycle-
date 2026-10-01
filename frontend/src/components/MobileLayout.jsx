@@ -67,7 +67,7 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
                 }}
                 onClick={() => navigate(inAdminSection ? '/' : '/admin')}
               >
-                {inAdminSection ? '🏪 Shop View' : '⚙️ Admin'}
+                {inAdminSection ? '🏪 Shop' : '⚙️ Admin'}
               </button>
             )}
 
@@ -117,7 +117,7 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
                 })}
               >
                 <span style={styles.navIcon}>📋</span>
-                <span style={styles.navLabel}>All Records</span>
+                <span style={styles.navLabel}>Records</span>
               </NavLink>
 
               <NavLink
@@ -147,7 +147,7 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
                 style={styles.navItem}
               >
                 <span style={styles.navIcon}>🚲</span>
-                <span style={styles.navLabel}>Shop Form</span>
+                <span style={styles.navLabel}>Shop</span>
               </NavLink>
             </>
           ) : (
@@ -244,28 +244,35 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 16px',
+    padding: '0 12px',
+    gap: '8px',
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
+    minWidth: 0,
+    flex: 1,
   },
   brandRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '8px',
     cursor: 'pointer',
+    minWidth: 0,
   },
   headerLogo: {
-    width: '34px',
-    height: '34px',
+    width: '32px',
+    height: '32px',
     borderRadius: '8px',
     objectFit: 'contain',
     border: '1px solid #e2e8f0',
+    flexShrink: 0,
   },
   headerTitles: {
     display: 'flex',
     flexDirection: 'column',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   headerBrand: {
     fontSize: '10px',
@@ -273,12 +280,18 @@ const styles = {
     color: '#1a56db',
     textTransform: 'uppercase',
     letterSpacing: '0.8px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   headerShop: {
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: '800',
     color: '#0f172a',
     lineHeight: '1.2',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   backBtn: {
     background: 'none',
@@ -292,12 +305,13 @@ const styles = {
   headerRight: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
+    flexShrink: 0,
   },
   adminSwitchBtn: {
     border: 'none',
-    borderRadius: '10px',
-    padding: '5px 9px',
+    borderRadius: '8px',
+    padding: '5px 8px',
     fontSize: '11px',
     fontWeight: '700',
     cursor: 'pointer',
@@ -306,21 +320,25 @@ const styles = {
   userBadge: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '5px',
     backgroundColor: '#f1f5f9',
     borderRadius: '20px',
-    padding: '4px 10px',
+    padding: '3px 8px',
   },
   userDot: {
-    width: '8px',
-    height: '8px',
+    width: '7px',
+    height: '7px',
     borderRadius: '50%',
     backgroundColor: '#16a34a',
   },
   userName: {
-    fontSize: '12px',
+    fontSize: '11.5px',
     fontWeight: '600',
     color: '#334155',
+    maxWidth: '60px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   mainContent: {
     width: '100%',
@@ -367,7 +385,9 @@ const styles = {
     textDecoration: 'none',
     color: '#64748b',
     flex: 1,
+    minWidth: 0,
     height: '100%',
+    padding: '2px 0',
     touchAction: 'manipulation',
     cursor: 'pointer',
   },
@@ -384,6 +404,7 @@ const styles = {
     border: 'none',
     color: '#64748b',
     flex: 1,
+    minWidth: 0,
     height: '100%',
     touchAction: 'manipulation',
     cursor: 'pointer',
@@ -397,6 +418,10 @@ const styles = {
   navLabel: {
     fontSize: '10px',
     fontWeight: '600',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '100%',
   },
   newActionIcon: {
     width: '28px',

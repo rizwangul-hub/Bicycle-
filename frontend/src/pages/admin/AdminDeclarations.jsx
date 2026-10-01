@@ -243,6 +243,7 @@ const styles = {
   },
   searchInput: {
     flex: 1,
+    minWidth: 0,
     height: '42px',
     borderRadius: '10px',
     border: '1px solid #cbd5e1',
@@ -261,6 +262,8 @@ const styles = {
     fontSize: '13px',
     fontWeight: '700',
     cursor: 'pointer',
+    flexShrink: 0,
+    touchAction: 'manipulation',
   },
   resultsHeader: {
     marginBottom: '10px',
@@ -329,6 +332,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '6px',
     marginBottom: '6px',
   },
   shopBadge: {
@@ -338,6 +343,10 @@ const styles = {
     fontWeight: '800',
     borderRadius: '6px',
     padding: '3px 8px',
+    maxWidth: '100%',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   dateTag: {
     fontSize: '11px',
@@ -349,6 +358,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: '800',
     color: '#0f172a',
+    wordBreak: 'break-word',
   },
   bikeLine: {
     display: 'flex',
@@ -358,14 +368,17 @@ const styles = {
   },
   bikeIcon: {
     fontSize: '13px',
+    flexShrink: 0,
   },
   bikeTitle: {
     fontSize: '13px',
     fontWeight: '700',
     color: '#1a56db',
+    wordBreak: 'break-word',
   },
   tagsRow: {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '6px',
     marginBottom: '8px',
   },
@@ -376,6 +389,7 @@ const styles = {
     fontWeight: '600',
     padding: '2px 6px',
     borderRadius: '6px',
+    wordBreak: 'break-all',
   },
   tagPrice: {
     backgroundColor: '#fef3c7',
@@ -389,6 +403,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '6px',
     borderTop: '1px solid #f1f5f9',
     paddingTop: '8px',
   },
@@ -406,6 +422,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '8px',
     marginTop: '12px',
     padding: '12px 4px',
   },
