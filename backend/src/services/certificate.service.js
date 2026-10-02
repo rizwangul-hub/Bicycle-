@@ -34,7 +34,7 @@ function formatDate(iso) {
 /**
  * Generate full standalone HTML for the Official Declaration Certificate.
  */
-function generateCertificateHtml(declaration, attachments = [], token = '') {
+function generateCertificateHtml(declaration, attachments = [], token = '', scriptNonce = '') {
   const refCode = declaration._id ? declaration._id.toString().slice(-8).toUpperCase() : 'UNKNOWN';
   const shopName = declaration.shopId?.name || declaration.shopId?.shopCode || 'Authorized Bicycle Shop';
   const shopLocation = declaration.shopId?.location || declaration.shopId?.address || 'United Kingdom';
@@ -600,15 +600,15 @@ function generateCertificateHtml(declaration, attachments = [], token = '') {
   <div class="toolbar-container no-print">
     <div class="print-toolbar">
       <div class="btn-row">
-        <button type="button" class="btn-action-pdf" onclick="downloadPdf()">
+        <button type="button" class="btn-action-pdf" id="download-pdf">
           <span>📥</span>
           <span>Download PDF File</span>
         </button>
-        <button type="button" class="btn-action-print" onclick="window.print()">
+        <button type="button" class="btn-action-print" id="print-certificate">
           <span>🖨️</span>
           <span>Print</span>
         </button>
-        <button type="button" class="btn-action-close" onclick="handleClose()">
+        <button type="button" class="btn-action-close" id="close-certificate">
           <span>✕ Close</span>
         </button>
       </div>
@@ -786,17 +786,14 @@ function generateCertificateHtml(declaration, attachments = [], token = '') {
     </div>
   </div>
 
-  <script>
+  <script nonce="${escapeHtml(scriptNonce)}">
     function downloadPdf() {
-      try {
-        var params = new URLSearchParams(window.location.search);
-        var token = params.get('token') || '${escapeHtml(token)}';
-        var pdfUrl = '/api/declarations/${declaration._id}/pdf' + (token ? '?token=' + encodeURIComponent(token) : '');
-        window.location.href = pdfUrl;
-      } catch (err) {
-        console.error('PDF download error:', err);
-        window.location.href = '/api/declarations/${declaration._id}/pdf';
-      }
+      var params = new URLSearchParams(window.location.search);
+      var currentToken = params.get('token') || '${escapeHtml(token)}';
+      var pdfUrl = '/api/declarations/${declaration._id}/pdf';
+      window.location.href = currentToken
+        ? pdfUrl + '?token=' + encodeURIComponent(currentToken)
+        : pdfUrl;
     }
 
     function handleClose() {
@@ -814,6 +811,12 @@ function generateCertificateHtml(declaration, attachments = [], token = '') {
         }
       }, 150);
     }
+
+    document.getElementById('download-pdf').addEventListener('click', downloadPdf);
+    document.getElementById('print-certificate').addEventListener('click', function() {
+      window.print();
+    });
+    document.getElementById('close-certificate').addEventListener('click', handleClose);
   </script>
 </body>
 </html>`;

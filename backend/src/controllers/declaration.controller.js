@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const declarationService = require('../services/declaration.service');
+const crypto = require('crypto');
 
 /**
  * Declaration controller handlers.
@@ -69,7 +70,12 @@ const getDeclarationCertificate = asyncHandler(async (req, res) => {
 
   const { generateCertificateHtml } = require('../services/certificate.service');
   const token = req.query.token || '';
-  const html = generateCertificateHtml(declaration, attachments, token);
+  const scriptNonce = crypto.randomBytes(16).toString('base64');
+  const html = generateCertificateHtml(declaration, attachments, token, scriptNonce);
+  res.setHeader(
+    'Content-Security-Policy',
+    `default-src 'none'; script-src 'nonce-${scriptNonce}'; style-src 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'`
+  );
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.status(200).send(html);
 });
