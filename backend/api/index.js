@@ -6,6 +6,16 @@
  */
 require('dotenv').config();
 
+// Ensure Vercel Serverless File Trace bundles PDFKit standard fonts
+try {
+  require('pdfkit/standard-fonts/Helvetica');
+  require('pdfkit/standard-fonts/HelveticaBold');
+  require('pdfkit/standard-fonts/Courier');
+  require('pdfkit/standard-fonts/TimesRoman');
+} catch (e) {
+  // Traced at build-time by @vercel/nft
+}
+
 const app = require('../src/app');
 
 module.exports = app;

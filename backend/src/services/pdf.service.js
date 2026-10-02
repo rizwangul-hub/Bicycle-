@@ -7,6 +7,12 @@
 
 const PDFDocument = require('pdfkit');
 
+// Statically require standard fonts so Vercel Serverless File Trace bundles them
+require('pdfkit/standard-fonts/Helvetica');
+require('pdfkit/standard-fonts/HelveticaBold');
+require('pdfkit/standard-fonts/Courier');
+require('pdfkit/standard-fonts/TimesRoman');
+
 function formatDate(iso) {
   if (!iso) return 'N/A';
   try {
