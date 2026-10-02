@@ -68,9 +68,35 @@ const getDeclarationCertificate = asyncHandler(async (req, res) => {
   }
 
   const { generateCertificateHtml } = require('../services/certificate.service');
-  const html = generateCertificateHtml(declaration, attachments);
+  const token = req.query.token || '';
+  const html = generateCertificateHtml(declaration, attachments, token);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.status(200).send(html);
+});
+
+// GET /api/declarations/:id/pdf
+const getDeclarationPdf = asyncHandler(async (req, res) => {
+  const declaration = await declarationService.getDeclarationById(req.params.id, req.user);
+  let attachments = [];
+  try {
+    const attachmentService = require('../services/attachment.service');
+    const attachResult = await attachmentService.getDeclarationAttachments(req.params.id, req.user);
+    attachments = attachResult.all || [];
+  } catch (attErr) {
+    // Non-fatal
+  }
+
+  const { generateDeclarationPdf } = require('../services/pdf.service');
+  const pdfBuffer = await generateDeclarationPdf(declaration, attachments);
+
+  const refCode = declaration._id ? declaration._id.toString().slice(-8).toUpperCase() : 'UNKNOWN';
+  const safeCustomer = (declaration.customerName || 'Customer').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `Customer-Declaration-${refCode}-${safeCustomer}.pdf`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Length', pdfBuffer.length);
+  res.status(200).send(pdfBuffer);
 });
 
 module.exports = {
@@ -80,4 +106,5 @@ module.exports = {
   updateDeclaration,
   deleteDeclaration,
   getDeclarationCertificate,
+  getDeclarationPdf,
 };

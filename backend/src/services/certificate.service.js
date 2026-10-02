@@ -34,7 +34,7 @@ function formatDate(iso) {
 /**
  * Generate full standalone HTML for the Official Declaration Certificate.
  */
-function generateCertificateHtml(declaration, attachments = []) {
+function generateCertificateHtml(declaration, attachments = [], token = '') {
   const refCode = declaration._id ? declaration._id.toString().slice(-8).toUpperCase() : 'UNKNOWN';
   const shopName = declaration.shopId?.name || declaration.shopId?.shopCode || 'Authorized Bicycle Shop';
   const shopLocation = declaration.shopId?.location || declaration.shopId?.address || 'United Kingdom';
@@ -119,41 +119,65 @@ function generateCertificateHtml(declaration, attachments = []) {
     }
     .btn-row {
       display: flex;
+      flex-direction: column;
       gap: 10px;
       width: 100%;
-      max-width: 480px;
+      max-width: 540px;
     }
-    .btn-action-print {
+    @media (min-width: 540px) {
+      .btn-row {
+        flex-direction: row;
+      }
+    }
+    .btn-action-pdf {
       flex: 2;
-      height: 46px;
+      height: 48px;
       background: #1a56db;
       color: #ffffff;
       border: none;
       border-radius: 12px;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 10px rgba(26, 86, 219, 0.3);
+      box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+      touch-action: manipulation;
+      text-decoration: none;
+    }
+    .btn-action-print {
+      flex: 1.3;
+      height: 48px;
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       touch-action: manipulation;
     }
     .btn-action-close {
       flex: 1;
-      height: 46px;
+      height: 48px;
       background: #f8fafc;
-      color: #475569;
+      color: #334155;
       border: 1px solid #cbd5e1;
       border-radius: 12px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       touch-action: manipulation;
+      text-decoration: none;
     }
     .toolbar-guide {
       font-size: 12px;
@@ -576,16 +600,20 @@ function generateCertificateHtml(declaration, attachments = []) {
   <div class="toolbar-container no-print">
     <div class="print-toolbar">
       <div class="btn-row">
-        <button class="btn-action-print" onclick="window.print()">
-          <span>🖨️</span>
-          <span>Print / Save as PDF</span>
+        <button type="button" class="btn-action-pdf" onclick="downloadPdf()">
+          <span>📥</span>
+          <span>Download PDF File</span>
         </button>
-        <button class="btn-action-close" onclick="window.close(); if(window.history.length > 1) window.history.back();">
+        <button type="button" class="btn-action-print" onclick="window.print()">
+          <span>🖨️</span>
+          <span>Print</span>
+        </button>
+        <button type="button" class="btn-action-close" onclick="handleClose()">
           <span>✕ Close</span>
         </button>
       </div>
       <div class="toolbar-guide">
-        💡 <strong>iPhone / Mobile Tip:</strong> Tap <em>Print / Save as PDF</em> &rarr; on the print preview, pinch open with two fingers or tap Share (⬆️) &rarr; select <strong>"Save to Files"</strong> to save this customer's PDF.
+        💡 <strong>Direct PDF Download:</strong> Tap <em>"Download PDF File"</em> to directly save this customer's official certificate to your device or mobile phone.
       </div>
     </div>
   </div>
@@ -759,16 +787,33 @@ function generateCertificateHtml(declaration, attachments = []) {
   </div>
 
   <script>
-    // Auto-launch native print/save dialog on load
-    window.addEventListener('load', function() {
+    function downloadPdf() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var token = params.get('token') || '${escapeHtml(token)}';
+        var pdfUrl = '/api/declarations/${declaration._id}/pdf' + (token ? '?token=' + encodeURIComponent(token) : '');
+        window.location.href = pdfUrl;
+      } catch (err) {
+        console.error('PDF download error:', err);
+        window.location.href = '/api/declarations/${declaration._id}/pdf';
+      }
+    }
+
+    function handleClose() {
+      // 1. Try closing if opened in new tab or popup
+      try {
+        window.close();
+      } catch (e) {}
+
+      // 2. If tab is still open (browser blocked window.close), navigate back to app
       setTimeout(function() {
-        try {
-          window.print();
-        } catch (e) {
-          console.warn('Auto print trigger notice:', e);
+        if (document.referrer && document.referrer.indexOf('/declarations') !== -1) {
+          window.location.href = document.referrer;
+        } else {
+          window.location.href = 'https://bicycle-ymym.vercel.app/declarations/${declaration._id}';
         }
-      }, 600);
-    });
+      }, 150);
+    }
   </script>
 </body>
 </html>`;

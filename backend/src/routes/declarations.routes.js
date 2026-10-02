@@ -7,6 +7,7 @@ const {
   updateDeclaration,
   deleteDeclaration,
   getDeclarationCertificate,
+  getDeclarationPdf,
 } = require('../controllers/declaration.controller');
 
 const router = express.Router();
@@ -23,6 +24,14 @@ router.use(authenticate);
  * ADMIN: allowed for any shop.
  */
 router.get('/:id/certificate', getDeclarationCertificate);
+
+/**
+ * GET /api/declarations/:id/pdf
+ * Return official downloadable A4 vector PDF binary file.
+ * SHOP_USER: allowed only for own shop.
+ * ADMIN: allowed for any shop.
+ */
+router.get('/:id/pdf', getDeclarationPdf);
 
 /**
  * POST /api/declarations

@@ -70,6 +70,17 @@ export const DeclarationDetail = () => {
     }
   };
 
+  const handleDownloadPdf = () => {
+    const pdfUrl = declarationService.getPdfUrl(id);
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.setAttribute('download', `Declaration-${id}.pdf`);
+    link.setAttribute('target', '_blank');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <MobileLayout title="Declaration Details" showBack>
@@ -130,16 +141,26 @@ export const DeclarationDetail = () => {
 
       {/* ── Action Toolbar (Certificate / Print / PDF) ── */}
       <div style={styles.actionToolbar}>
-        <button
-          type="button"
-          style={styles.certBtn}
-          onClick={handlePrintCertificate}
-        >
-          <span>📄</span>
-          <span>Print / Save PDF Certificate</span>
-        </button>
+        <div style={styles.actionButtonsRow}>
+          <button
+            type="button"
+            style={styles.downloadPdfBtn}
+            onClick={handleDownloadPdf}
+          >
+            <span>📥</span>
+            <span>Download Customer PDF</span>
+          </button>
+          <button
+            type="button"
+            style={styles.certBtn}
+            onClick={handlePrintCertificate}
+          >
+            <span>📄</span>
+            <span>View / Print Certificate</span>
+          </button>
+        </div>
         <p style={styles.certHint}>
-          Generates official printable certificate with customer details, photos, and signatures.
+          Official UK Bicycle Owner Declaration Certificate with photo evidence & signatures.
         </p>
       </div>
 
@@ -497,9 +518,31 @@ const styles = {
   actionToolbar: {
     marginBottom: '14px',
   },
-  certBtn: {
+  actionButtonsRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  downloadPdfBtn: {
     width: '100%',
     height: '48px',
+    borderRadius: '14px',
+    backgroundColor: '#1a56db',
+    color: '#ffffff',
+    fontSize: '14px',
+    fontWeight: '700',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 4px 10px rgba(26, 86, 219, 0.28)',
+    touchAction: 'manipulation',
+  },
+  certBtn: {
+    width: '100%',
+    height: '46px',
     borderRadius: '14px',
     backgroundColor: '#0f172a',
     color: '#ffffff',

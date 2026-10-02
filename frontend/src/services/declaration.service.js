@@ -93,4 +93,10 @@ export const declarationService = {
     const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
     return `${API_BASE_URL}${ENDPOINTS.DECLARATIONS.CERTIFICATE(id)}${tokenParam}`;
   },
+
+  getPdfUrl: (id) => {
+    const token = authService.getToken();
+    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+    return `${API_BASE_URL}${ENDPOINTS.DECLARATIONS.PDF(id)}${tokenParam}`;
+  },
 };

@@ -18,6 +18,7 @@ export const ENDPOINTS = {
     UPDATE: (id) => `/declarations/${id}`,
     DELETE: (id) => `/declarations/${id}`,
     CERTIFICATE: (id) => `/declarations/${id}/certificate`,
+    PDF: (id) => `/declarations/${id}/pdf`,
   },
   UPLOADS: {
     DECLARATION: (id) => `/uploads/declaration/${id}`,
