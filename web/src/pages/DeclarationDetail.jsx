@@ -68,6 +68,7 @@ export default function DeclarationDetail() {
 
   // Downloading State
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [isPreparingCertificate, setIsPreparingCertificate] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
 
   // Load declaration and attachments
@@ -192,6 +193,17 @@ export default function DeclarationDetail() {
     }
   };
 
+  const handlePrintCertificate = async () => {
+    setIsPreparingCertificate(true);
+    try {
+      await printCertificate(declaration, attachmentsData?.all || [], token);
+    } catch (err) {
+      alert(err.message || 'Could not prepare the certificate.');
+    } finally {
+      setIsPreparingCertificate(false);
+    }
+  };
+
   // Lightbox Viewer Navigation
   const openViewerForImage = (att) => {
     const idx = imageGalleryList.findIndex((item) => item._id === att._id);
@@ -266,11 +278,12 @@ export default function DeclarationDetail() {
               <div style={styles.topActions}>
                 <span style={styles.shopBadge}>{shopName}</span>
                 <button
-                  onClick={() => printCertificate(declaration, attachmentsData?.all || [])}
+                  onClick={handlePrintCertificate}
+                  disabled={isPreparingCertificate}
                   style={styles.pdfBtn}
                   title="Generate, Print, or Save as PDF"
                 >
-                  📄 Download PDF Certificate
+                  {isPreparingCertificate ? 'Preparing PDF…' : '📄 Print / Download PDF'}
                 </button>
                 <button onClick={startEditing} style={styles.editBtn}>
                   ✏️ Edit Declaration

@@ -3,6 +3,8 @@
  * Pixx Bicycle Owner's Declaration System — Admin Web Dashboard
  */
 
+import { BASE_URL, ENDPOINTS } from '../config/api';
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -83,6 +85,32 @@ export function buildCertificateHtml(declaration, attachments = []) {
       padding: 16px;
       font-size: 13px;
       line-height: 1.5;
+    }
+    .print-toolbar {
+      max-width: 820px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .print-toolbar button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #ffffff;
+      background: #1e3a8a;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .print-toolbar .close-button {
+      background: #475569;
+    }
+    .print-help {
+      margin-right: auto;
+      color: #475569;
+      font-size: 12px;
     }
     .cert-container {
       max-width: 820px;
@@ -225,10 +253,10 @@ export function buildCertificateHtml(declaration, attachments = []) {
     .photo-section {
       margin-top: 14px;
       margin-bottom: 20px;
-      page-break-inside: avoid;
     }
     .photo-category {
       margin-bottom: 10px;
+      break-inside: avoid;
     }
     .photo-cat-title {
       font-size: 11px;
@@ -255,6 +283,11 @@ export function buildCertificateHtml(declaration, attachments = []) {
       object-fit: cover;
       display: block;
       background: #e2e8f0;
+    }
+    @media print {
+      .print-toolbar {
+        display: none;
+      }
     }
     .photo-meta {
       font-size: 9px;
@@ -316,6 +349,11 @@ export function buildCertificateHtml(declaration, attachments = []) {
   </style>
 </head>
 <body>
+  <div class="print-toolbar">
+    <span class="print-help">To download a PDF, choose “Save as PDF” in the print dialog.</span>
+    <button type="button" onclick="window.print()">Print / Download PDF</button>
+    <button type="button" class="close-button" onclick="window.close()">Close</button>
+  </div>
   <div class="cert-container">
     <div class="cert-header">
       <div class="brand-block">
@@ -431,19 +469,77 @@ export function buildCertificateHtml(declaration, attachments = []) {
 }
 
 /**
- * Triggers the browser print dialog with the Certificate HTML.
+ * Fetches protected image files and embeds them so the print document does
+ * not depend on browser authentication or cross-origin image permissions.
  */
-export function printCertificate(declaration, attachments = []) {
-  const html = buildCertificateHtml(declaration, attachments);
-  const printWindow = window.open('', '_blank', 'width=900,height=800');
-  if (printWindow) {
+async function embedAttachmentImages(attachments, token) {
+  return Promise.all(
+    attachments.map(async (attachment) => {
+      const isImage =
+        attachment.fileType === 'image' ||
+        attachment.mimeType?.startsWith('image/');
+
+      if (!isImage) return attachment;
+
+      const response = await fetch(
+        `${BASE_URL}${ENDPOINTS.ATTACHMENTS.DOWNLOAD_ONE(attachment._id)}`,
+        { headers: { Authorization: ['Bearer', token].join(' ') } }
+      );
+      if (!response.ok) {
+        throw new Error(`Could not load image "${attachment.originalFileName || 'attachment'}".`);
+      }
+
+      const imageBlob = await response.blob();
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Could not prepare an image for the PDF.'));
+        reader.readAsDataURL(imageBlob);
+      });
+
+      return { ...attachment, storageUrl: dataUrl };
+    })
+  );
+}
+
+/**
+ * Opens a print-ready certificate with working print, PDF, and close controls.
+ */
+export async function printCertificate(declaration, attachments = [], token) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    throw new Error('The certificate window was blocked. Allow pop-ups for this website and try again.');
+  }
+
+  printWindow.document.write(
+    '<!doctype html><title>Preparing certificate</title><p style="font:16px sans-serif;padding:24px">Preparing certificate and attached images…</p>'
+  );
+
+  try {
+    const printableAttachments = await embedAttachmentImages(attachments, token);
     printWindow.document.open();
-    printWindow.document.write(html);
+    printWindow.document.write(buildCertificateHtml(declaration, printableAttachments));
     printWindow.document.close();
-    // Wait for images and fonts to layout
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 500);
+
+    await new Promise((resolve) => {
+      const images = Array.from(printWindow.document.images);
+      if (images.length === 0) {
+        resolve();
+        return;
+      }
+      Promise.all(
+        images.map((image) =>
+          image.decode().catch(() => undefined)
+        )
+      ).then(resolve);
+    });
+
+    printWindow.focus();
+    printWindow.print();
+  } catch (error) {
+    printWindow.document.body.innerHTML =
+      `<p style="font:16px sans-serif;padding:24px;color:#b91c1c">${escapeHtml(error.message || 'Could not prepare the certificate.')}</p>` +
+      '<button onclick="window.close()">Close</button>';
+    throw error;
   }
 }
