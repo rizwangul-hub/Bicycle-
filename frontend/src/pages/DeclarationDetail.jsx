@@ -32,11 +32,75 @@ export const DeclarationDetail = () => {
 
       try {
         const attachRes = await uploadService.getDeclarationAttachments(id);
-        if (attachRes?.grouped) {
-          setAttachments(attachRes.grouped);
+        const grouped = attachRes?.grouped || {
+          BICYCLE: [],
+          CUSTOMER: [],
+          ID: [],
+          ADDITIONAL: [],
+        };
+
+        // Fallback: If any category in grouped is empty, check declaration.attachments
+        if (data?.attachments) {
+          if ((!grouped.BICYCLE || grouped.BICYCLE.length === 0) && data.attachments.bicyclePhotos?.length) {
+            grouped.BICYCLE = data.attachments.bicyclePhotos.map((url, i) => ({
+              _id: `bike-${i}`,
+              storageUrl: url,
+              originalFileName: `Bicycle Photo ${i + 1}`,
+              category: 'BICYCLE',
+            }));
+          }
+          if ((!grouped.CUSTOMER || grouped.CUSTOMER.length === 0) && data.attachments.customerPhotos?.length) {
+            grouped.CUSTOMER = data.attachments.customerPhotos.map((url, i) => ({
+              _id: `cust-${i}`,
+              storageUrl: url,
+              originalFileName: `Customer Photo ${i + 1}`,
+              category: 'CUSTOMER',
+            }));
+          }
+          if ((!grouped.ID || grouped.ID.length === 0) && data.attachments.idPhotos?.length) {
+            grouped.ID = data.attachments.idPhotos.map((url, i) => ({
+              _id: `id-${i}`,
+              storageUrl: url,
+              originalFileName: `ID Photo ${i + 1}`,
+              category: 'ID',
+            }));
+          }
+          if ((!grouped.ADDITIONAL || grouped.ADDITIONAL.length === 0) && data.attachments.additionalDocuments?.length) {
+            grouped.ADDITIONAL = data.attachments.additionalDocuments.map((url, i) => ({
+              _id: `add-${i}`,
+              storageUrl: url,
+              originalFileName: `Document ${i + 1}`,
+              category: 'ADDITIONAL',
+            }));
+          }
         }
+        setAttachments(grouped);
       } catch (attErr) {
         console.warn('Attachments fetch note:', attErr.message);
+        if (data?.attachments) {
+          setAttachments({
+            BICYCLE: (data.attachments.bicyclePhotos || []).map((url, i) => ({
+              _id: `bike-${i}`,
+              storageUrl: url,
+              originalFileName: `Bicycle Photo ${i + 1}`,
+            })),
+            CUSTOMER: (data.attachments.customerPhotos || []).map((url, i) => ({
+              _id: `cust-${i}`,
+              storageUrl: url,
+              originalFileName: `Customer Photo ${i + 1}`,
+            })),
+            ID: (data.attachments.idPhotos || []).map((url, i) => ({
+              _id: `id-${i}`,
+              storageUrl: url,
+              originalFileName: `ID Photo ${i + 1}`,
+            })),
+            ADDITIONAL: (data.attachments.additionalDocuments || []).map((url, i) => ({
+              _id: `add-${i}`,
+              storageUrl: url,
+              originalFileName: `Document ${i + 1}`,
+            })),
+          });
+        }
       }
     } catch (err) {
       setError(err.message || 'Could not load declaration.');
@@ -344,8 +408,8 @@ export const DeclarationDetail = () => {
       {/* Lightbox Modal */}
       {activePhoto && (
         <ImageViewerModal
-          src={activePhoto.url}
-          alt={activePhoto.originalName || 'Photo'}
+          src={activePhoto.storageUrl || activePhoto.url || (typeof activePhoto === 'string' ? activePhoto : '')}
+          alt={activePhoto.originalFileName || activePhoto.originalName || activePhoto.fileName || 'Photo'}
           onClose={() => setActivePhoto(null)}
         />
       )}
@@ -399,21 +463,28 @@ const PhotoGallerySection = ({
         </div>
       ) : (
         <div style={styles.galleryGrid}>
-          {items.map((item, idx) => (
-            <div
-              key={item._id || idx}
-              style={styles.galleryItem}
-              onClick={() => onView(item)}
-              title="Tap to enlarge"
-            >
-              <img
-                src={item.url}
-                alt={item.originalName || `Photo ${idx + 1}`}
-                style={styles.galleryThumb}
-              />
-              <span style={styles.tapLabel}>🔍 Enlarge</span>
-            </div>
-          ))}
+          {items.map((item, idx) => {
+            const imgUrl = typeof item === 'string' ? item : (item.storageUrl || item.url || '');
+            const imgAlt = typeof item === 'string' ? `Photo ${idx + 1}` : (item.originalFileName || item.originalName || item.fileName || `Photo ${idx + 1}`);
+
+            return (
+              <div
+                key={item._id || idx}
+                style={styles.galleryItem}
+                onClick={() => onView(item)}
+                title="Tap to enlarge"
+              >
+                <img
+                  src={imgUrl}
+                  alt={imgAlt}
+                  style={styles.galleryThumb}
+                  loading="lazy"
+                  crossOrigin="anonymous"
+                />
+                <span style={styles.tapLabel}>🔍 Enlarge</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
