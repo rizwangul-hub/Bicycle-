@@ -1,13 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.js": {
-      "includeFiles": [
-        "src/**",
-        "node_modules/pdfkit/js/standard-fonts/**"
-      ]
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",

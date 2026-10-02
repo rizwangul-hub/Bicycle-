@@ -600,15 +600,15 @@ function generateCertificateHtml(declaration, attachments = [], token = '', scri
   <div class="toolbar-container no-print">
     <div class="print-toolbar">
       <div class="btn-row">
-        <button type="button" class="btn-action-pdf" id="download-pdf">
+        <button type="button" class="btn-action-pdf" id="download-pdf" onclick="downloadPdf()">
           <span>📥</span>
           <span>Download PDF File</span>
         </button>
-        <button type="button" class="btn-action-print" id="print-certificate">
+        <button type="button" class="btn-action-print" id="print-certificate" onclick="window.print()">
           <span>🖨️</span>
           <span>Print</span>
         </button>
-        <button type="button" class="btn-action-close" id="close-certificate">
+        <button type="button" class="btn-action-close" id="close-certificate" onclick="handleClose()">
           <span>✕ Close</span>
         </button>
       </div>

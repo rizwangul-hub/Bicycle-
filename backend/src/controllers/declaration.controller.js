@@ -74,7 +74,7 @@ const getDeclarationCertificate = asyncHandler(async (req, res) => {
   const html = generateCertificateHtml(declaration, attachments, token, scriptNonce);
   res.setHeader(
     'Content-Security-Policy',
-    `default-src 'none'; script-src 'nonce-${scriptNonce}'; style-src 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'`
+    `default-src 'self' 'unsafe-inline' https: data:; script-src 'self' 'unsafe-inline' 'nonce-${scriptNonce}'; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; frame-ancestors 'self' https://bicycle-ymym.vercel.app https://*.vercel.app;`
   );
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.status(200).send(html);
