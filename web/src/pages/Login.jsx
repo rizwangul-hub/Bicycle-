@@ -156,7 +156,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@pixx.co.uk"
+              placeholder="e.g. fahad@gmail.com"
               required
               style={styles.input}
               disabled={isLoading}

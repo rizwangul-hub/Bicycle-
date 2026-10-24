@@ -91,25 +91,49 @@ const seed = async () => {
     console.log(`   ✓ ${email}  →  ${shop.name}`);
   }
 
-  // ── 3. Seed Admin ──────────────────────────────────────
-  console.log('\n🔑 Seeding admin account...');
-  const adminPasswordHash = await hashPassword(ADMIN_PASSWORD);
-
-  await User.findOneAndUpdate(
-    { email: ADMIN_EMAIL },
+  // ── 3. Seed Admins ─────────────────────────────────────
+  console.log('\n🔑 Seeding admin accounts...');
+  const ADMINS = [
     {
-      $set: {
-        name:         'Pixx Administrator',
-        email:        ADMIN_EMAIL,
-        passwordHash: adminPasswordHash,
-        role:         'ADMIN',
-        shopId:       null,
-        isActive:     true,
-      },
+      name: 'Pixx Administrator',
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
     },
-    { upsert: true, new: true, runValidators: false }
-  );
-  console.log(`   ✓ ${ADMIN_EMAIL}  →  ADMIN (all shops)\n`);
+    {
+      name: 'Fahad Rasheed',
+      email: 'fahad@gmail.com',
+      password: 'fahad123',
+    },
+    {
+      name: 'Khurshid Anwar',
+      email: 'khurshid@gmail.com',
+      password: 'khurshid123',
+    },
+    {
+      name: 'Kamran Ijaz',
+      email: 'kamran@gmail.com',
+      password: 'kamran123',
+    },
+  ];
+
+  for (const admin of ADMINS) {
+    const passwordHash = await hashPassword(admin.password);
+    await User.findOneAndUpdate(
+      { email: admin.email.toLowerCase() },
+      {
+        $set: {
+          name: admin.name,
+          email: admin.email.toLowerCase(),
+          passwordHash,
+          role: 'ADMIN',
+          shopId: null,
+          isActive: true,
+        },
+      },
+      { upsert: true, new: true, runValidators: false }
+    );
+    console.log(`   ✓ ${admin.name} (${admin.email})  →  ADMIN (all shops)`);
+  }
 
   // ── Summary ───────────────────────────────────────────
   console.log('══════════════════════════════════════════');
