@@ -4,6 +4,7 @@ import { MobileLayout } from '../components/MobileLayout';
 import { ImageViewerModal } from '../components/ImageViewerModal';
 import { declarationService } from '../services/declaration.service';
 import { uploadService } from '../services/upload.service';
+import { compressImageFile } from '../utils/imageCompressor';
 
 export const DeclarationDetail = () => {
   const { id } = useParams();
@@ -117,7 +118,9 @@ export const DeclarationDetail = () => {
     if (!fileList || fileList.length === 0) return;
     setUploadingCategory(category);
     try {
-      await uploadService.uploadAttachments(id, category, Array.from(fileList));
+      const rawFiles = Array.from(fileList);
+      const compressedFiles = await Promise.all(rawFiles.map((f) => compressImageFile(f)));
+      await uploadService.uploadAttachments(id, category, compressedFiles);
       await loadData();
     } catch (err) {
       alert(err.message || 'Failed to upload photo.');
@@ -236,21 +239,30 @@ export const DeclarationDetail = () => {
             <span style={styles.detailLabel}>Full Name:</span>
             <span style={styles.detailValue}>{declaration.customerName}</span>
           </div>
-          {declaration.phone && (
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Phone:</span>
-              <a href={`tel:${declaration.phone}`} style={styles.linkValue}>
-                {declaration.phone}
-              </a>
-            </div>
-          )}
-          {declaration.mobile && (
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Mobile:</span>
-              <a href={`tel:${declaration.mobile}`} style={styles.linkValue}>
-                {declaration.mobile}
-              </a>
-            </div>
+          {declaration.phone && declaration.mobile && declaration.phone !== declaration.mobile ? (
+            <>
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Phone:</span>
+                <a href={`tel:${declaration.phone}`} style={styles.linkValue}>
+                  {declaration.phone}
+                </a>
+              </div>
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Mobile:</span>
+                <a href={`tel:${declaration.mobile}`} style={styles.linkValue}>
+                  {declaration.mobile}
+                </a>
+              </div>
+            </>
+          ) : (
+            (declaration.phone || declaration.mobile) && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Phone / Mobile:</span>
+                <a href={`tel:${declaration.phone || declaration.mobile}`} style={styles.linkValue}>
+                  {declaration.phone || declaration.mobile}
+                </a>
+              </div>
+            )
           )}
           {declaration.email && (
             <div style={styles.detailRow}>

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ImageViewerModal } from './ImageViewerModal';
+import { compressImageFile } from '../utils/imageCompressor';
 
 export const PhotoUploader = ({
   title,
@@ -16,10 +17,16 @@ export const PhotoUploader = ({
   const galleryInputRef = useRef(null);
   const [activePreview, setActivePreview] = useState(null);
 
-  const handleFiles = (selectedFileList) => {
+  const handleFiles = async (selectedFileList) => {
     if (!selectedFileList || selectedFileList.length === 0) return;
 
-    const newEntries = Array.from(selectedFileList).map((file) => ({
+    const rawList = Array.from(selectedFileList);
+    // Compress each file to keep under 1MB and guarantee JPEG format
+    const compressedList = await Promise.all(
+      rawList.map((file) => compressImageFile(file))
+    );
+
+    const newEntries = compressedList.map((file) => ({
       file,
       name: file.name,
       previewUrl: URL.createObjectURL(file),

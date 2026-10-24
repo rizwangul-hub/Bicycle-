@@ -61,13 +61,14 @@ export const CreateDeclaration = () => {
 
     try {
       // 1) Save Declaration data
+      const contactNumber = phone.trim() || mobile.trim() || undefined;
       const inputData = {
         customerName: customerName.trim(),
         bicycleModel: bicycleModel.trim(),
         date: date || undefined,
         address: address.trim() || undefined,
-        phone: phone.trim() || undefined,
-        mobile: mobile.trim() || undefined,
+        phone: contactNumber,
+        mobile: contactNumber,
         email: email.trim() || undefined,
         postcode: postcode.trim().toUpperCase() || undefined,
         cashPurchasePageNo: cashPurchasePageNo.trim() || undefined,
@@ -86,48 +87,54 @@ export const CreateDeclaration = () => {
       const created = await declarationService.create(inputData);
       const declarationId = created._id;
 
-      // 2) Upload ID Photos if attached
-      if (idPhotos.length > 0) {
-        setSubmitStep('Uploading ID Photo...');
-        try {
-          const files = idPhotos.map((item) => item.file);
-          await uploadService.uploadAttachments(declarationId, 'ID', files);
-        } catch (uploadErr) {
-          console.warn('ID upload warning:', uploadErr.message);
+      // 2) Upload all attached photo categories reliably
+      const uploadCategory = async (catName, catLabel, photoList) => {
+        if (!photoList || photoList.length === 0) return;
+        setSubmitStep(`Uploading ${catLabel}...`);
+        const files = photoList
+          .map((item) => item?.file || item)
+          .filter((f) => f && (f instanceof Blob || f instanceof File));
+        if (files.length > 0) {
+          await uploadService.uploadAttachments(declarationId, catName, files);
         }
+      };
+
+      const uploadWarnings = [];
+
+      try {
+        await uploadCategory('ID', 'Customer ID Photo', idPhotos);
+      } catch (err) {
+        console.error('ID upload warning:', err);
+        uploadWarnings.push(`Customer ID: ${err.message}`);
       }
 
-      // 3) Upload Customer Photos if attached
-      if (customerPhotos.length > 0) {
-        setSubmitStep('Uploading Customer Photo...');
-        try {
-          const files = customerPhotos.map((item) => item.file);
-          await uploadService.uploadAttachments(declarationId, 'CUSTOMER', files);
-        } catch (uploadErr) {
-          console.warn('Customer photo upload warning:', uploadErr.message);
-        }
+      try {
+        await uploadCategory('CUSTOMER', 'Customer Picture', customerPhotos);
+      } catch (err) {
+        console.error('Customer picture upload warning:', err);
+        uploadWarnings.push(`Customer Picture: ${err.message}`);
       }
 
-      // 4) Upload Bicycle Photos if attached
-      if (bicyclePhotos.length > 0) {
-        setSubmitStep('Uploading Bicycle Photos...');
-        try {
-          const files = bicyclePhotos.map((item) => item.file);
-          await uploadService.uploadAttachments(declarationId, 'BICYCLE', files);
-        } catch (uploadErr) {
-          console.warn('Bicycle photos upload warning:', uploadErr.message);
-        }
+      try {
+        await uploadCategory('BICYCLE', 'Bicycle Photos', bicyclePhotos);
+      } catch (err) {
+        console.error('Bicycle photos upload warning:', err);
+        uploadWarnings.push(`Bicycle Photos: ${err.message}`);
       }
 
-      // 5) Upload Additional Photos / Documents if attached
-      if (additionalPhotos.length > 0) {
-        setSubmitStep('Uploading Other Documents...');
-        try {
-          const files = additionalPhotos.map((item) => item.file);
-          await uploadService.uploadAttachments(declarationId, 'ADDITIONAL', files);
-        } catch (uploadErr) {
-          console.warn('Additional photos upload warning:', uploadErr.message);
-        }
+      try {
+        await uploadCategory('ADDITIONAL', 'Other Documents', additionalPhotos);
+      } catch (err) {
+        console.error('Additional documents upload warning:', err);
+        uploadWarnings.push(`Other Documents: ${err.message}`);
+      }
+
+      if (uploadWarnings.length > 0) {
+        alert(
+          `Declaration created, but some photos could not be uploaded:\n• ${uploadWarnings.join(
+            '\n• '
+          )}\n\nYou can re-upload them anytime on the declaration details page.`
+        );
       }
 
       // Redirect to full declaration view
@@ -173,7 +180,7 @@ export const CreateDeclaration = () => {
           </div>
 
           <div style={styles.field}>
-            <label style={styles.label}>Phone Number</label>
+            <label style={styles.label}>Phone / Mobile Number</label>
             <input
               type="tel"
               style={styles.input}
@@ -228,27 +235,15 @@ export const CreateDeclaration = () => {
             />
           </div>
 
-          <div style={styles.row}>
-            <div style={{ ...styles.field, flex: 1 }}>
-              <label style={styles.label}>Mobile</label>
-              <input
-                type="tel"
-                style={styles.input}
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="Mobile number"
-              />
-            </div>
-            <div style={{ ...styles.field, flex: 1 }}>
-              <label style={styles.label}>Postcode</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                placeholder="e.g. NW1 7AA"
-              />
-            </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Postcode</label>
+            <input
+              type="text"
+              style={styles.input}
+              value={postcode}
+              onChange={(e) => setPostcode(e.target.value)}
+              placeholder="e.g. NW1 7AA"
+            />
           </div>
 
           <div style={styles.field}>

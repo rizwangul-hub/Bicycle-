@@ -149,6 +149,78 @@ class AttachmentService {
       }
     });
 
+    // Fallback: If any category is empty in Attachment model but exists in declaration.attachments
+    if (declaration.attachments) {
+      if (grouped.BICYCLE.length === 0 && declaration.attachments.bicyclePhotos?.length) {
+        declaration.attachments.bicyclePhotos.forEach((url, i) => {
+          const item = {
+            _id: `bike-legacy-${i}`,
+            declarationId: declaration._id,
+            shopId: declaration.shopId,
+            category: 'BICYCLE',
+            originalFileName: `Bicycle Photo ${i + 1}`,
+            mimeType: 'image/jpeg',
+            fileType: 'image',
+            storageUrl: url,
+            createdAt: declaration.createdAt,
+          };
+          grouped.BICYCLE.push(item);
+          attachments.push(item);
+        });
+      }
+      if (grouped.CUSTOMER.length === 0 && declaration.attachments.customerPhotos?.length) {
+        declaration.attachments.customerPhotos.forEach((url, i) => {
+          const item = {
+            _id: `cust-legacy-${i}`,
+            declarationId: declaration._id,
+            shopId: declaration.shopId,
+            category: 'CUSTOMER',
+            originalFileName: `Customer Photo ${i + 1}`,
+            mimeType: 'image/jpeg',
+            fileType: 'image',
+            storageUrl: url,
+            createdAt: declaration.createdAt,
+          };
+          grouped.CUSTOMER.push(item);
+          attachments.push(item);
+        });
+      }
+      if (grouped.ID.length === 0 && declaration.attachments.idPhotos?.length) {
+        declaration.attachments.idPhotos.forEach((url, i) => {
+          const item = {
+            _id: `id-legacy-${i}`,
+            declarationId: declaration._id,
+            shopId: declaration.shopId,
+            category: 'ID',
+            originalFileName: `ID Photo ${i + 1}`,
+            mimeType: 'image/jpeg',
+            fileType: 'image',
+            storageUrl: url,
+            createdAt: declaration.createdAt,
+          };
+          grouped.ID.push(item);
+          attachments.push(item);
+        });
+      }
+      if (grouped.ADDITIONAL.length === 0 && declaration.attachments.additionalDocuments?.length) {
+        declaration.attachments.additionalDocuments.forEach((url, i) => {
+          const item = {
+            _id: `add-legacy-${i}`,
+            declarationId: declaration._id,
+            shopId: declaration.shopId,
+            category: 'ADDITIONAL',
+            originalFileName: `Document ${i + 1}`,
+            mimeType: url.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
+            fileType: url.endsWith('.pdf') ? 'document' : 'image',
+            storageUrl: url,
+            createdAt: declaration.createdAt,
+          };
+          grouped.ADDITIONAL.push(item);
+          attachments.push(item);
+        });
+      }
+    }
+
     return {
       declarationId,
       totalAttachments: attachments.length,

@@ -81,14 +81,77 @@ export default function DeclarationDetail() {
         declarationService.getDeclarationById(token, id),
         declarationService.getAttachments(token, id).catch(() => null),
       ]);
+
+      const grouped = atts?.grouped || {
+        BICYCLE: [],
+        CUSTOMER: [],
+        ID: [],
+        ADDITIONAL: [],
+      };
+
+      // Fallback: If any category is empty in atts, check decl.attachments
+      if (decl?.attachments) {
+        if ((!grouped.BICYCLE || grouped.BICYCLE.length === 0) && decl.attachments.bicyclePhotos?.length) {
+          grouped.BICYCLE = decl.attachments.bicyclePhotos.map((url, i) => ({
+            _id: `bike-${i}`,
+            storageUrl: url,
+            originalFileName: `Bicycle Photo ${i + 1}`,
+            category: 'BICYCLE',
+            fileType: 'image',
+          }));
+        }
+        if ((!grouped.CUSTOMER || grouped.CUSTOMER.length === 0) && decl.attachments.customerPhotos?.length) {
+          grouped.CUSTOMER = decl.attachments.customerPhotos.map((url, i) => ({
+            _id: `cust-${i}`,
+            storageUrl: url,
+            originalFileName: `Customer Photo ${i + 1}`,
+            category: 'CUSTOMER',
+            fileType: 'image',
+          }));
+        }
+        if ((!grouped.ID || grouped.ID.length === 0) && decl.attachments.idPhotos?.length) {
+          grouped.ID = decl.attachments.idPhotos.map((url, i) => ({
+            _id: `id-${i}`,
+            storageUrl: url,
+            originalFileName: `ID Photo ${i + 1}`,
+            category: 'ID',
+            fileType: 'image',
+          }));
+        }
+        if ((!grouped.ADDITIONAL || grouped.ADDITIONAL.length === 0) && decl.attachments.additionalDocuments?.length) {
+          grouped.ADDITIONAL = decl.attachments.additionalDocuments.map((url, i) => ({
+            _id: `add-${i}`,
+            storageUrl: url,
+            originalFileName: `Document ${i + 1}`,
+            category: 'ADDITIONAL',
+            fileType: url.endsWith('.pdf') ? 'document' : 'image',
+          }));
+        }
+      }
+
+      const allList = [
+        ...(grouped.BICYCLE || []),
+        ...(grouped.CUSTOMER || []),
+        ...(grouped.ID || []),
+        ...(grouped.ADDITIONAL || []),
+      ];
+
       setDeclaration(decl);
-      setAttachmentsData(atts);
+      setAttachmentsData({
+        ...atts,
+        grouped,
+        totalAttachments: allList.length,
+        all: allList,
+      });
 
       // Populate flat list of images for image lightbox
-      if (atts?.all) {
-        const imagesOnly = atts.all.filter((a) => a.fileType === 'image' || a.mimeType.startsWith('image/'));
-        setImageGalleryList(imagesOnly);
-      }
+      const imagesOnly = allList.filter(
+        (a) =>
+          a.fileType === 'image' ||
+          (a.mimeType && a.mimeType.startsWith('image/')) ||
+          /\.(jpe?g|png|webp|gif)/i.test(a.storageUrl || '')
+      );
+      setImageGalleryList(imagesOnly);
     } catch (err) {
       setError(err.message || 'Failed to load declaration record.');
     } finally {
@@ -144,7 +207,13 @@ export default function DeclarationDetail() {
     setIsSaving(true);
     setEditError(null);
     try {
-      await declarationService.updateDeclaration(token, id, editFormData);
+      const contact = editFormData.phone?.trim() || editFormData.mobile?.trim() || '';
+      const payload = {
+        ...editFormData,
+        phone: contact,
+        mobile: contact,
+      };
+      await declarationService.updateDeclaration(token, id, payload);
       setActionSuccess('Declaration updated successfully.');
       setIsEditing(false);
       await loadData();
@@ -206,9 +275,15 @@ export default function DeclarationDetail() {
 
   // Lightbox Viewer Navigation
   const openViewerForImage = (att) => {
-    const idx = imageGalleryList.findIndex((item) => item._id === att._id);
+    const idx = imageGalleryList.findIndex(
+      (item) => (item._id && item._id === att._id) || item.storageUrl === att.storageUrl
+    );
     if (idx !== -1) {
       setViewerIndex(idx);
+      setViewerOpen(true);
+    } else {
+      setImageGalleryList((prev) => [...prev, att]);
+      setViewerIndex(imageGalleryList.length);
       setViewerOpen(true);
     }
   };
@@ -323,8 +398,14 @@ export default function DeclarationDetail() {
                 <InfoRow label="Declaration Date" value={formatDate(declaration.date)} />
                 <InfoRow label="Address" value={declaration.address} />
                 <InfoRow label="Postcode" value={declaration.postcode} />
-                <InfoRow label="Phone" value={declaration.phone} />
-                <InfoRow label="Mobile" value={declaration.mobile} />
+                {declaration.phone && declaration.mobile && declaration.phone !== declaration.mobile ? (
+                  <>
+                    <InfoRow label="Phone" value={declaration.phone} />
+                    <InfoRow label="Mobile" value={declaration.mobile} />
+                  </>
+                ) : (
+                  <InfoRow label="Phone / Mobile" value={declaration.phone || declaration.mobile} />
+                )}
                 <InfoRow label="Email" value={declaration.email} />
                 <InfoRow label="Cash Purchase Page #" value={declaration.cashPurchasePageNo} />
                 <InfoRow label="Customer Signature" value={declaration.signature} />
@@ -546,21 +627,11 @@ export default function DeclarationDetail() {
                   />
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Phone</label>
+                  <label style={styles.formLabel}>Phone / Mobile Number</label>
                   <input
                     type="text"
                     name="phone"
-                    value={editFormData.phone}
-                    onChange={handleEditChange}
-                    style={styles.formInput}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Mobile</label>
-                  <input
-                    type="text"
-                    name="mobile"
-                    value={editFormData.mobile}
+                    value={editFormData.phone || editFormData.mobile || ''}
                     onChange={handleEditChange}
                     style={styles.formInput}
                   />
@@ -789,7 +860,10 @@ function AttachmentCategoryCard({
       ) : (
         <div style={styles.catFilesList}>
           {attachments.map((att) => {
-            const isImg = att.fileType === 'image' || att.mimeType.startsWith('image/');
+            const isImg =
+              att.fileType === 'image' ||
+              (att.mimeType && att.mimeType.startsWith('image/')) ||
+              /\.(jpe?g|png|webp|gif)/i.test(att.storageUrl || '');
             const isDownloading = downloadingId === att._id;
 
             return (
