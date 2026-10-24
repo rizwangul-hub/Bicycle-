@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import logoImg from '../assets/image/logo.png';
+const logoImg = '/adminlogo.png';
 
 export default function Login() {
   const { login } = useAuth();
@@ -103,10 +103,10 @@ export default function Login() {
       <div style={styles.card}>
         <div style={styles.header}>
           <div style={styles.logoWrapper}>
-            <img src={logoImg} alt="Pixx Logo" style={styles.logoImage} />
+            <img src={logoImg} alt="Bicycle Admin logo" style={styles.logoImage} />
           </div>
           <span style={styles.brandTitle}>PixxTechnologiees</span>
-          <h1 style={styles.mainTitle}>Bicycle Purchases system</h1>
+          <h1 style={styles.mainTitle}>Bicycle Admin</h1>
           <p style={styles.subtitle}>Admin Dashboard & Management Portal</p>
         </div>
 
@@ -118,7 +118,7 @@ export default function Login() {
             </div>
             <div style={styles.installMeta}>
               <span style={styles.installBadge}>App Shortcut</span>
-              <strong style={styles.installAppName}>Bicycle Purchases system</strong>
+              <strong style={styles.installAppName}>Bicycle Admin</strong>
               <span style={styles.installAppDesc}>
                 Install admin shortcut on your mobile or desktop
               </span>
@@ -135,7 +135,7 @@ export default function Login() {
               type="button"
               style={styles.installBtn}
               onClick={handleInstallClick}
-              title="Add Bicycle Purchases system to home screen"
+              title="Add Bicycle Admin to home screen"
             >
               <span style={{ fontSize: '16px' }}>📲</span>
               <span>Install App on Mobile</span>
@@ -206,7 +206,7 @@ export default function Login() {
               </div>
               <div style={styles.modalHeaderText}>
                 <h3 style={styles.modalTitle}>Install on iPhone</h3>
-                <span style={styles.modalSubtitle}>Bicycle Purchases system</span>
+                <span style={styles.modalSubtitle}>Bicycle Admin</span>
               </div>
               <button
                 type="button"
@@ -251,7 +251,7 @@ export default function Login() {
                 <div style={styles.stepDetails}>
                   <span style={styles.stepTitle}>Tap "Add" in Top Right</span>
                   <span style={styles.stepDesc}>
-                    Confirm the name <strong>"Bicycle Purchases system"</strong> and tap <strong>Add</strong>.
+                    Confirm the name <strong>"Bicycle Admin"</strong> and tap <strong>Add</strong>.
                   </span>
                 </div>
               </div>
@@ -283,7 +283,7 @@ export default function Login() {
               </div>
               <div style={styles.modalHeaderText}>
                 <h3 style={styles.modalTitle}>Install App Shortcut</h3>
-                <span style={styles.modalSubtitle}>Bicycle Purchases system</span>
+                <span style={styles.modalSubtitle}>Bicycle Admin</span>
               </div>
               <button
                 type="button"
@@ -296,7 +296,7 @@ export default function Login() {
             </div>
 
             <p style={styles.modalInstructionIntro}>
-              Add <strong>Bicycle Purchases system</strong> to your home screen or desktop:
+              Add <strong>Bicycle Admin</strong> to your home screen or desktop:
             </p>
 
             <div style={styles.stepsContainer}>

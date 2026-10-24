@@ -1,11 +1,14 @@
-// Service Worker for Bicycle Purchases system PWA
-const CACHE_NAME = 'bicycle-purchases-admin-v1';
+// Service Worker for Bicycle Admin PWA
+const CACHE_NAME = 'bicycle-admin-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/logo.png',
-  '/favicon.svg'
+  '/adminlogo.png',
+  '/admin-icon-32.png',
+  '/admin-icon-180.png',
+  '/admin-icon-192.png',
+  '/admin-icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {

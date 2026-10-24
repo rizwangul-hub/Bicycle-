@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import logoImg from '../assets/image/logo.png';
+const logoImg = '/adminlogo.png';
 
 export function AdminLayout({ children }) {
   const { user, logout } = useAuth();
@@ -32,11 +32,11 @@ export function AdminLayout({ children }) {
           <div style={styles.brandRow}>
             <Link to="/admin/dashboard" style={styles.brandLink}>
               <div style={styles.brandLogo}>
-                <img src={logoImg} alt="Logo" style={styles.brandLogoImg} />
+                <img src={logoImg} alt="Bicycle Admin logo" style={styles.brandLogoImg} />
               </div>
               <div>
                 <span style={styles.brandTag}>PixxTechnologiees UK</span>
-                <h1 style={styles.brandTitle}>Bicycle Owner Declarations</h1>
+                <h1 style={styles.brandTitle}>Bicycle Admin</h1>
               </div>
             </Link>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import logoImg from '../assets/image/logo.png';
+const logoImg = '/adminlogo.png';
 
 export function LoadingScreen({ message = 'Loading application...' }) {
   return (
@@ -8,7 +8,7 @@ export function LoadingScreen({ message = 'Loading application...' }) {
         <div style={styles.logoBadge}>
           <img
             src={logoImg}
-            alt="Pixx Logo"
+            alt="Bicycle Admin logo"
             style={styles.logoImage}
           />
         </div>

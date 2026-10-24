@@ -1,7 +1,7 @@
 {
-  "name": "Bicycle Purchases system",
-  "short_name": "Bicycle Purchases",
-  "description": "Official Bicycle Purchases and Owner Declaration System",
+  "name": "Bicycle Admin",
+  "short_name": "Bicycle Admin",
+  "description": "Pixx Bicycle Owner’s Declaration System administration portal",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -11,19 +11,19 @@
   "theme_color": "#1a56db",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/admin-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/adminlogo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/admin-icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
