@@ -114,6 +114,11 @@ const seed = async () => {
       email: 'kamran@gmail.com',
       password: 'kamran123',
     },
+    {
+      name: 'Rizwan',
+      email: 'rizwan@gmail.com',
+      password: 'rizwan123',
+    },
   ];
 
   for (const admin of ADMINS) {

@@ -29,6 +29,11 @@ const ADMINS_TO_SEED = [
     email: 'kamran@gmail.com',
     password: 'kamran123',
   },
+  {
+    name: 'Rizwan',
+    email: 'rizwan@gmail.com',
+    password: 'rizwan123',
+  },
 ];
 
 async function seedAdmins() {
