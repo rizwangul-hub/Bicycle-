@@ -14,6 +14,21 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
     }
   };
 
+  const handleBackToPortal = () => {
+    const portalUrl = 'https://pixx-tech.vercel.app'; // Central Portal URL
+    // If opened inside Central Portal iframe, notify parent or redirect top window
+    try {
+      if (window.top && window.top !== window.self) {
+        window.top.postMessage('PIXXTECH_RETURN', '*');
+        window.top.location.href = portalUrl;
+        return;
+      }
+    } catch {
+      window.parent?.postMessage?.('PIXXTECH_RETURN', '*');
+    }
+    window.location.href = portalUrl;
+  };
+
   const inAdminSection = location.pathname.startsWith('/admin');
 
   return (
@@ -57,6 +72,14 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
           </div>
 
           <div style={styles.headerRight}>
+            <button
+              type="button"
+              onClick={handleBackToPortal}
+              style={styles.portalBtn}
+              title="Return to Central PixxTech Portal"
+            >
+              ← PixxTech Portal
+            </button>
             {isAdmin && (
               <button
                 type="button"
@@ -307,6 +330,23 @@ const styles = {
     alignItems: 'center',
     gap: '6px',
     flexShrink: 0,
+  },
+  portalBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    border: '1px solid rgba(56, 189, 248, 0.35)',
+    color: '#38BDF8',
+    padding: '5px 9px',
+    borderRadius: '8px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    whiteSpace: 'nowrap',
+    touchAction: 'manipulation',
+    boxSizing: 'border-box',
   },
   adminSwitchBtn: {
     border: 'none',

@@ -13,6 +13,21 @@ export function AdminLayout({ children }) {
     navigate('/login', { replace: true });
   };
 
+  const handleBackToPortal = () => {
+    const portalUrl = 'https://pixx-tech.vercel.app'; // Central Portal URL
+    // If opened inside Central Portal iframe, notify parent or redirect top window
+    try {
+      if (window.top && window.top !== window.self) {
+        window.top.postMessage('PIXXTECH_RETURN', '*');
+        window.top.location.href = portalUrl;
+        return;
+      }
+    } catch {
+      window.parent?.postMessage?.('PIXXTECH_RETURN', '*');
+    }
+    window.location.href = portalUrl;
+  };
+
   const navItemStyle = ({ isActive }) => ({
     padding: '8px 16px',
     borderRadius: '8px',
@@ -59,6 +74,14 @@ export function AdminLayout({ children }) {
 
           {/* User Profile & Sign Out */}
           <div style={styles.userSection}>
+            <button
+              type="button"
+              onClick={handleBackToPortal}
+              style={styles.portalBtn}
+              title="Return to Central PixxTech Portal"
+            >
+              ← PixxTech Portal
+            </button>
             <div style={styles.userInfo}>
               <span style={styles.userName}>{user?.name || 'Administrator'}</span>
               <span style={styles.roleBadge}>ADMIN</span>
@@ -81,6 +104,19 @@ export function AdminLayout({ children }) {
         {/* Mobile Navigation Dropdown */}
         {mobileMenuOpen && (
           <div style={styles.mobileNavDropdown}>
+            <button
+              type="button"
+              onClick={handleBackToPortal}
+              style={{
+                ...styles.portalBtn,
+                width: '100%',
+                justifyContent: 'center',
+                marginBottom: '8px',
+                padding: '10px 14px',
+              }}
+            >
+              ← PixxTech Portal
+            </button>
             <NavLink
               to="/admin/dashboard"
               style={navItemStyle}
@@ -212,6 +248,23 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '14px',
+  },
+  portalBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    border: '1px solid rgba(56, 189, 248, 0.35)',
+    color: '#38BDF8',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    transition: 'all 0.15s ease-in-out',
+    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
   },
   userInfo: {
     display: 'flex',
