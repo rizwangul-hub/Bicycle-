@@ -14,19 +14,23 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
     }
   };
 
+  const [portalHover, setPortalHover] = React.useState(false);
+
   const handleBackToPortal = () => {
-    const portalUrl = 'https://pixx-tech.vercel.app'; // Central Portal URL
-    // If opened inside Central Portal iframe, notify parent or redirect top window
-    try {
-      if (window.top && window.top !== window.self) {
+    const PORTAL_URL = 'https://pixxtech.vercel.app';
+
+    // If inside Central Portal iframe, notify parent portal and redirect the main window
+    if (window.top && window.top !== window.self) {
+      try {
         window.top.postMessage('PIXXTECH_RETURN', '*');
-        window.top.location.href = portalUrl;
-        return;
+        window.top.location.href = PORTAL_URL;
+      } catch (e) {
+        window.location.href = PORTAL_URL;
       }
-    } catch {
-      window.parent?.postMessage?.('PIXXTECH_RETURN', '*');
+    } else {
+      // If opened directly in a browser tab
+      window.location.href = PORTAL_URL;
     }
-    window.location.href = portalUrl;
   };
 
   const inAdminSection = location.pathname.startsWith('/admin');
@@ -75,7 +79,12 @@ export const MobileLayout = ({ children, title, showBack = false }) => {
             <button
               type="button"
               onClick={handleBackToPortal}
-              style={styles.portalBtn}
+              onMouseEnter={() => setPortalHover(true)}
+              onMouseLeave={() => setPortalHover(false)}
+              style={{
+                ...styles.portalBtn,
+                backgroundColor: portalHover ? 'rgba(56, 189, 248, 0.22)' : 'rgba(56, 189, 248, 0.12)',
+              }}
               title="Return to Central PixxTech Portal"
             >
               ← PixxTech Portal
@@ -336,9 +345,9 @@ const styles = {
     alignItems: 'center',
     gap: '4px',
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    border: '1px solid rgba(56, 189, 248, 0.35)',
+    border: '1px solid rgba(56, 189, 248, 0.4)',
     color: '#38BDF8',
-    padding: '5px 9px',
+    padding: '6px 14px',
     borderRadius: '8px',
     fontSize: '12px',
     fontWeight: '600',
@@ -347,6 +356,8 @@ const styles = {
     whiteSpace: 'nowrap',
     touchAction: 'manipulation',
     boxSizing: 'border-box',
+    outline: 'none',
+    transition: 'all 0.15s ease-in-out',
   },
   adminSwitchBtn: {
     border: 'none',
